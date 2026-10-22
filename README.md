@@ -2,6 +2,16 @@
 
 A design skill for coding agents. It makes the agent the designer of a product's interface, interaction, and journey, and gives it lenses, numbers, and browser scripts to check its own work: alignment overlays, a heatmap of parts that should match, stress tests for long text and long lists, and a text-only read of the screen.
 
+## What it sees
+
+The layout meter draws every left edge in magenta, every box edge in dashed blue, and marks near-misses in red. The same Sources screen before and after a pass with the skill:
+
+| Before: 20 left edges, 1 near-miss, 6 boxes | After: 10 left edges, no near-miss, 5 boxes |
+| --- | --- |
+| ![Layout meter on the screen before](docs/before.png) | ![Layout meter on the screen after](docs/after.png) |
+
+Fewer lines look calmer: the title, search, list, and tiles now start on one edge, and the dates sit in their own column.
+
 ## Install
 
 ```sh
