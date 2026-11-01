@@ -1,132 +1,128 @@
 # Scripts
 
-Plain browser JavaScript, no dependencies. Each file is one expression that returns a JSON string. Paths below are relative to this skill's folder.
+Three plain browser scripts, no dependencies, plus `measure.sh`. Each script is one expression that returns a JSON string and draws an overlay. Each file's header comment holds its full rules. Paths are relative to this skill's folder; prettier formats the scripts with this folder's `.prettierrc.json`.
 
-The counts point at candidates, and you decide from the screenshot. Each lens file's Numbers section names the counts it uses and their targets.
+Run one script:
 
-## Run
-
-`scripts/measure.sh <url-or-file> <out-dir> [region]` runs every script on a page or region and saves each result as JSON and a screenshot, in a session of its own. `scripts/measure.sh --compare <before-dir> <after-dir>` prints every number that changed. It needs agent-browser and node; `WIDTH` and `HEIGHT` set the window (1440x900).
-
-One script at a time:
-
-- agent-browser: `agent-browser eval "$(cat scripts/layout-meter.js)"`
-- Playwright: `await page.evaluate(fs.readFileSync("scripts/layout-meter.js", "utf8"))`
+- agent-browser: `agent-browser eval "$(cat scripts/redline.js)"`
+- Playwright: `await page.evaluate(fs.readFileSync("scripts/redline.js", "utf8"))`
 - DevTools: paste the file into the console.
 
-Set an option in the same call, before the script: `agent-browser eval "window.__view = 'far'; $(cat scripts/views.js)"`.
+Set options in the same call, before the script: `agent-browser eval "window.__view = 'bands'; $(cat scripts/view.js)"`.
 
-## Layer
+**Layer.** Every script reads one layer: `window.__axesLayer` (an element or a selector, first visible match), else the last open dialog or sheet, else the first visible `main`, else the body, with a `warning` in the JSON. Point it at the region you are fixing; on a whole page the shell buries the check. Reset with `window.__axesLayer = undefined`.
 
-`layout-meter.js`, `heatmap.js`, `text.js`, `inventory.js`, and `stress.js` read one layer: `window.__axesLayer` (an element or a selector), else the last open dialog or sheet, else `main`, else the body. `views.js` covers the whole page unless `window.__axesLayer` is set.
+**Scene.** All three scripts share one block that reads the layer the way a designer does: columns (boxes side by side), containers (painted boxes: a fill, a full border, or a shadow), and data (charts, waveforms, bar runs and what sits over them, avatars and avatar stacks), which counts as one thing and is never measured inside.
 
-- Measure a sheet: open it; the scripts find it.
-- Measure a region or a mock: `window.__axesLayer = ".my-stage"`. Point the scripts at the region you are fixing; on the whole page the shell's lines and values bury the finding.
-- Reset: `window.__axesLayer = undefined`.
+## Findings
 
-## layout-meter.js
+Each script returns `checks`, ranked by `score`, and numbers them on its overlay in the same order:
 
-Measures the part of the layer in view; scroll to measure the rest. Draws an overlay; screenshot it, then `window.__axesClear()`.
+| Field | Holds |
+| --- | --- |
+| `kind` | `edge`, `baseline`, `inset` (redline); `contrast`, `sibling`, `control`, `crowding` (count); `rhythm`, `dead-zone`, `collision`, `break` (view bands) |
+| `where` | The element that holds the value, by a handle you can search the code for: an id, `data-slot`, `data-testid`, or its rarest class that is not a utility class, else through the nearest ancestor with one (`ul[data-slot="list"] h2`) |
+| `text` | Its visible text, or `image 320×180`, `box 120×80` |
+| `against` | What it is off from, with that element and value |
+| `off` | The mover minus the reference: px for geometry, the value's difference otherwise |
+| `fix` | One edit: property, value, element |
+| `apply` | The same edit as data, `[{selector, property, value}]`, for `measure.sh --try`; empty when the fix needs more than CSS |
+| `count` | How many places this one check stands for |
+| `score` | 0 to 1. At 0.5 or more a designer would fix it; under 0.5 is a note |
+
+Every check is a deviation from its own group: an edge most of a column shares, a gap most siblings use, a value most of one kind use. A value that is merely off a scale is no check.
+
+## redline.js
+
+Do things sit on shared lines? It measures the part of the layer in view.
 
 | Overlay | Means |
 | --- | --- |
-| Magenta line | A left edge |
-| Dashed pink line | A right edge |
-| Dashed blue line | Top or bottom of a box or control |
-| Cyan line | A hairline rule |
-| Red band | A near-miss: neighbor edges 1 to 4px apart |
-| Violet band | A doubled line: two lines 1 to 3px apart |
-| Orange outline | Siblings of one kind with unequal heights |
+| Pink guide down, count on top | Three or more starts share this x in one column, or a card, tile, divider, or image edge runs here |
+| Dashed pink guide | Shared right edges |
+| Pink guide across | Shared tops or bottoms of boxes and edges |
+| Red box, `+2` | A start or a box's right edge 1 to 3px off a guide |
+| Orange box, `+8` | The same, 4 to 8px off (up to 12px inside a card) |
+| Dashed purple guide across | A style line: where one text style (size, weight, color) of a row of cards sits, drawn on its baseline when something leaves it |
+| Purple box | A baseline or inset miss; a box without a badge is a text the check names as pushed |
+| Number badge | A check, same number as in the JSON, placed where it covers no text |
 
-Fields: `frame`, `leftAxes`, `rightAxes`, `leftAxesPx`, `nearMissX`, `nearMissPx`, `nearMissY`, `nearMissBaseline`, `doubledLines`, `horizontalEdges`, `unequalSiblings`, `horizontalRules`, `verticalRules`, `boxes`, `boxNesting`, `insets`, `chips`, `textStyles`, `styles`, `words`, `mutedSample`, `layer`, `width`. Targets: [alignment.md](../references/alignment.md#numbers).
+Guides are scoped: a start compares with starts in its own column and container, and the contents of sibling cards compare with each other. Right edges count for boxes (cards, inputs, buttons, tables, dividers, images) and right-aligned text, never for ragged text. A card whose content inset, left or right, disagrees with its column's other cards is one `inset` check. A table is its outer edges plus one start per column. A miss on both sides is one check with the symmetric edit (`padding-inline`), so a half edit leaves a check behind.
 
-`frame` holds the page title's text, its position inside the layer, and its size, plus `crumb`: where the breadcrumb's first segment starts and what its last one says, and the flags `crumbOffKeyline` and `crumbEndsInTitle`. Run the meter at the top of neighbor screens at one window size: the values match when the frames match. A frame with its own nav, such as settings, differs on purpose.
+Down the page it measures as it does across: a card's first text below its top edge and its last content above its bottom edge, against cards of one kind (`inset`, `padding-block` when a taller header control centres the title lower); a label and its value in a `dl` or any list of side-by-side pairs on one line (`baseline`); in a row of three or more cards, each text style on one line, where a text that wraps and pushes the ones below it is one check naming what it pushes (`baseline`); and card tops, bottoms, and heading baselines in neighbouring columns that miss each other by 1 to 12px (`edge`, axis y; a larger difference is a layout choice). A check whose only fix would zero a control's padding, give it a negative margin, or change a font size is dropped.
 
-`insets` lists how far each box's first left edge sits inside it, with counts.
+**Live.** `window.__redlineLive = true` before the script, or `<script src=".../redline.js"></script>` in a click dummy, keeps it redrawing on DOM changes, scroll, and resize. **Alt+R** hides and shows it. `window.__redlineClear()` removes the overlay and its listeners.
 
-What counts as an edge: a text start or end, an icon without a visible box around it, and a box or control. Text and icons inside a painted box up to 40px tall (a filled button, a chip, a tile) count by that box. A quiet button paints nothing, so its text and icon are its edges; text flush with its padding counts as left-aligned. A small group pushed to the right end of its row (actions, a trailing value) counts by its right edge only. Chips and icon tiles up to 40px are containers, not boxes, and a box filling the layer is its frame.
+JSON: `lines`, `rows` (guides drawn down and across), `near` and `far` (`[{text, where, off, axis}]`, 1 to 3px and 4 to 8px), `checks`.
 
-`nearMissBaseline` counts rows where text of a similar size sits 1.5 to 4px off its neighbor's baseline; the baseline comes from each font's ascent, so nothing on the page changes.
+## count.js
 
-## heatmap.js
+Is the screen crowded or inconsistent? A floating panel lists the checks by number, and outlines on the page match; it places itself where it covers the least. `window.__countClear()` removes it.
 
-Groups the rows, boxes, controls, and headings in view by kind and paints each kind in its own color, lettered. Rows are list items, or an element repeated in its parent; a control's kind is its role and variant (filled, tinted, outline, quiet). Screenshot it, then `window.__heatClear()`.
-
-| Overlay | Means |
+| Kind | Fires on |
 | --- | --- |
-| Tint and letter | One kind; the letter matches `groups` |
-| Red outline | A near-miss: the member differs from its kind by up to 4px of height or padding, 3px of radius, 2px of text size, one weight step, or a close shade |
-| Dashed red box | A row of controls whose heights differ by 1 to 8px, or with two filled buttons |
+| `contrast` | Text under WCAG AA against its painted background, one check per text color, every holder named; always 0.5 or more |
+| `sibling` | One of three or more siblings of one kind (tag and class) styled differently: fill, border, padding, first text. Also a few cells unlike the rest of their column, in a table or four or more repeated rows: a link among plain text, a chip among bare text. Hue alone is designed (status chips, a red overdue date) |
+| `control` | Controls in one group whose heights differ by 1 to 4px |
+| `crowding` | One action label on four or more buttons in a column; a note under 0.5 |
 
-A clear difference within a kind counts as a deliberate variant: `groups` lists it with its looks, unmarked. A selected or current member differs on purpose and is never marked. Inside a row or a table, a cell's position is part of its kind, so the second cell of every row is one kind.
+JSON besides `checks`: the inventory of the whole layer, scrolled out of view too (`fontSizes`, `fontWeights`, `lineHeights`, `textColors`, `backgrounds`, `radii`, `lines`, `shadows`, `gaps`, `icons`, `buttons`, `controls`, each `[value, count, sample]`), `distinct` and `oneOffs` per list, `tokens` and `offTokenValues`, `unnamed` and `smallTargets`, `words`, `rows` and `cards`, and `text` (`nothing`, `valueFormats`, `repeats`).
 
-| Field | Lists |
-| --- | --- |
-| `counts` | `kinds`, `nearMisses`, `mixedRows` |
-| `groups` | Each kind with its member count and, when they differ, its looks |
-| `nearMisses` | Each near-miss with what differs, such as `padding 20/16/16/16 vs 16/16/16/16` |
-| `rows` | Each mixed row of controls with why |
+## view.js
 
-## views.js
-
-`window.__view` picks the view; screenshot after it runs, then `window.__viewClear()`. `far`, `textonly`, and `nolines` restyle the page itself, so the layout stays exact; `wireframe` and `notext` draw an overlay.
+`window.__view` picks the view; screenshot, then `window.__viewClear()`.
 
 | View | Shows | Asks |
 | --- | --- | --- |
-| `far` (default) | Grayscale and blur; `window.__farBlur` sets the pixels | Can you name the page and point at what leads? |
-| `wireframe` | Boxes in their own grey, text as bars, images and icons as blocks | Do layout and balance hold without content? |
-| `notext` | Text erased, boxes and icons kept | Is the structure clear? |
-| `textonly` | Boxes, lines, fills, and icons stripped; text stays in place | Do the groups still hold together with space and type alone? |
-| `nolines` | Borders, dividers, and shadows stripped; fills stay; `lines` counts what it stripped | Which lines and shadows does the screen miss? |
+| `bands` | Gaps tinted by role and gutters, per column: section between the column's top-level blocks, row between repeated siblings, inner inside a card, above and below headings | Does space group, and does the rhythm hold down and across? Checks: `rhythm`, `dead-zone`, `collision`, and `break` (text cut without an ellipsis, an ID wrapped inside itself, a label struck by a line, chart labels included) |
+| `lead` | The layer blurred grey, its three heaviest things lettered; decoration dashed | Does the heading or primary action lead? No checks |
+| `grid` | An 8px grid from the layer's corner; down, each column's or card's edges and the edges shared inside it drawn heavier (right edges only for boxes that span their column); across, in orange, card tops and bottoms and header baselines shared along a row of columns, broken where a card misses the line (`rows` in the JSON) | What lines up, down and across? No checks |
+| `wireframe` | Boxes in their own grey, text as bars, icons as blocks, checked boxes filled | Do layout and balance hold without content? |
+| `notext` | Text erased; fills, boxes, and icons kept | Is the structure clear? |
+| `textonly` | Boxes, lines, fills, and icons stripped; text and control outlines in place | Do the groups hold with space and type alone? |
+| `long` | Text 80% longer; plain counts in thousands | Does it hold in a longer language? |
+| `many` | The first visible list's rows repeated to `window.__stressRows` (50), its other children (a divider, a label) kept in place | Does it hold for a mature account? |
 
-## stress.js
+`long` and `many` change the layer in place and return `before` and `after` (`clipped`: cut by a box hiding its overflow; `overlaps`: running into other text or across a box edge) and `broke`, the new breaks with where they are. An ellipsis or a line clamp is designed and not counted.
 
-Changes the layer in place and counts what breaks, before and after. Screenshot it, run the meter and `text.js` on the result, then `window.__stressClear()`.
+## measure.sh
 
-| `window.__stress` | Does |
-| --- | --- |
-| `long` (default) | Every text grows by 80%, a single word as one long compound; small counts grow to thousands; dates and times keep their shape |
-| `many` | Every list repeats its rows up to `window.__stressRows` (50); a list is a list element or three or more children of one shape, while navigation, tabs, and toolbars keep their items |
+```sh
+scripts/measure.sh [--all] [--url <url-or-file>] <out-dir> [region-selector]
+scripts/measure.sh --try <out-dir> <n> [fix.css]
+scripts/measure.sh --compare <before-dir> <after-dir>
+```
 
-`before` and `after` each hold `truncated` (text cut by an ellipsis or a line clamp), `clipped` (text cut by a box that hides its overflow), and `overlaps` (visible text running into other visible text, or across the edge of a filled or outlined box it does not live in; text under a sheet, outside its clipping box, or fully inside a highlight does not count). The layer's own edge is not a clip.
+It measures the page already open in agent-browser's session (`AGENT_BROWSER_SESSION`, else the default), so a signed-in app stays signed in. `--url` opens a page first; a local file works. It closes a session only when it opened it. The window is `WIDTH` x `HEIGHT` (1440x900). It finishes the page's entry animations first, so every image shows the page at rest.
 
-## text.js
+A run saves `page.png`, then `redline`, `count`, and `view-bands` as png and json, and `min-checks.json`: every check in one list, those at score 0.5 or more first, ranked by score and family (layout, then composition, then alignment, then tokens). It prints the minimum checks: the ones at score 0.5 or more, numbered by their place in `min-checks.json` (checks with the same edit print as one line), with `--all` the stress breaks, and last a line that sends you to the images:
 
-The layer's text in DOM order with a role per run: heading, label, button, link, icon, input, value, helper, text. No overlay.
+```
+Minimum checks: 1 layout, 2 alignment; fix layout before parts.
+1. baseline (redline #1, 0.95) dl.kpis dt "Mean time between failures": off 17 from dl.kpis dt "Downtime, 30 days" and the row's other dt texts in section.card > dl.kpis take 1 line; "296 h" and "last 12 months" leave their row's lines at y 274 and 293. Set min-height to 2lh on section.card > dl.kpis dt; …
+2. break (view-bands #1, 0.7) div.low > b "93": off 1 from div.plot > div.target, a line 722×1 at y 387. …
+Stress: long 7 new breaks (td > span.progress clipped, tr > th.num clipped, div.low > b overlaps text, …); many 0 new breaks.
+Now look at out/redline.png and out/view-bands.png yourself, region by region at 2x: these checks are the floor, the images show what no check names.
+```
 
-| Field | Lists |
-| --- | --- |
-| `counts` | `words`, `helpers`, `repeats`, `eyebrows`, `restated`, `nothing`, `truncated`, `actions` |
-| `lines` | Role, font size (`b` for bold), and text, top to bottom |
-| `words`, `roles` | Word count and runs per role |
-| `repeats` | Strings that appear more than once (values excluded) |
-| `valueFormats` | Value shapes with digits as 9 and words as a |
-| `eyebrows` | Short small text right above a larger heading |
-| `restated` | Neighbor runs where one starts with the other |
-| `nothing` | Lines outside rows that say there is nothing, and dash placeholders |
-| `truncated` | Text cut by an ellipsis or a line clamp |
-| `loudest` | The five largest runs by size and weight |
-| `actions` | One entry per button or short link, by its accessible name, with its count |
+The checks are the floor of a review, not the review: an empty list means the scripts found nothing they measure, and the images still need your eyes.
 
-## inventory.js
+`--all` adds the views lead, grid, wireframe, notext, and textonly and the stress views long and many.
 
-Every style value in the whole layer, scrolled out of view included. Use `window.__axesLayer = document.body` for the page with its shell. No overlay.
+`--try <out-dir> <n> [fix.css]` tries check `n`'s fix on the page still open: its `apply`, or the CSS you mean to put in the code, written to a file and applied as written, `@media` rules included. The printed `apply` names the check's elements (its holders); a fix may change only those. It compares the page before and after at `WIDTH` and `WIDTH` - 160 (1280, where a `nowrap` that fits at 1440 cuts) and prints FAIL with the reason when:
 
-| Field | Lists |
-| --- | --- |
-| `fontFamilies`, `fontSizes`, `fontWeights`, `textColors` | Values on text |
-| `backgrounds`, `radii`, `lines`, `shadows`, `gaps` | Values on boxes and layouts; a line is a border weight and color |
-| `icons` | Rendered size and stroke width, or `fill` |
-| `buttons`, `controls` | One entry per variant: role, height, fill, ink, edge, radius, type |
-| `distinct`, `oneOffs` | Values per list, and values used at most twice; with tokens, a value on a token is no one-off |
-| `tokens`, `offToken`, `offTokenValues` | Custom properties found, and the text colors, backgrounds, font sizes, and radii that match none of them (`null` when the page has no tokens) |
-| `offGrid` | Gaps off a 4px grid |
-| `lowContrast`, `lowContrastCount` | Text below WCAG AA against the fills behind it |
-| `unnamed`, `unnamedCount` | Buttons, links, and controls without an accessible name |
-| `smallTargets`, `smallTargetCount` | Targets under 24px, without a label that widens them, that sit closer than 24px to another target |
+- the check is still there at any score, as after a half edit (`padding-left` where the right side is off too), or a new check reaches 0.5;
+- the CSS matches elements other than the holders, their contents, and their ancestors (`table.tbl td a` recoloring every link for four), a pseudo-element counting as its element;
+- any computed style of any element of the region, its ancestors, or their pseudo-elements (`::before`, `::after`, `::first-line`, `::first-letter`, `::placeholder`, `::marker`) changes beyond what the fix may change: the printed properties and layout properties (padding, margin, gap, alignment, flex, grid placement, min and max sizes, display, wrapping) on the holders, the printed properties inside them, and layout properties on their ancestors. So small caps, `scaleX`, `filter`, `mix-blend-mode`, a transform, a covering `::after`, or a hidden placeholder fail;
+- a box outside the holders moves more than the holders grow or shrink, plus 2px, or a box docked to its parent's bottom or right edge comes off it;
+- a text that showed whole is cut, clipped (`overflow`, `contain`, `clip-path`, `mask`), covered, pushed out of its card, or run into other text, or now sits in a box that hides overflow.
 
-Each list entry is `[value, count, sample]`; the sample is the first element's text.
+Otherwise it prints PASS: the check is gone and the fix changed only its own elements. A check under 0.5 prints NOTE, since the tools do not vouch for it, and a check without `apply` (its fix needs markup) is refused. It pauses animations and stops the page's timers, so reload the page after. Then make the edit in the code and run `measure.sh` again, and look at its images.
+
+What it cannot see: the code (`!important` hides a specificity problem), meaning (links restyled to plain text, meta text in title ink), other states (hover, focus, dark, other data; `--all` covers long and many), widths other than the two, and a printed `apply` that is itself too broad, which the scripts guard by matching exactly the check's elements.
+
+`--compare` prints every number that changed across two folders.
 
 ## Regression set
 
-[`bench/`](../bench/README.md) holds three fixtures with known defects and the signals the scripts give on them. Rerun it after changing a script.
+The redline repo's [`bench/`](https://github.com/philippreiner/redline/tree/main/bench) holds fixtures with known defects, the signals the scripts give on them, and the `--try` cases. Rerun it after changing a script.

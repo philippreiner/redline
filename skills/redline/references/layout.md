@@ -1,10 +1,10 @@
-# 3 Layout and shell
+# 4 Layout and shell
 
-Start with the big picture: good detail cannot fix a wrong frame. Look at the screen the way a loading skeleton shows it, grey boxes only, and decide what goes where.
+Start with the big picture: good detail cannot fix a wrong frame. This lens is the layout gate: look at the screen the way a loading skeleton shows it, grey boxes only, and decide what goes where before any part gets styled.
 
 ## Grey boxes
 
-- Run `views.js` with `window.__view = "wireframe"` and screenshot: boxes in their own grey, text as bars, icons as blocks.
+- For a new layout, draw it as a greyscale wireframe first. For an existing screen, run `view.js` with `window.__view = "wireframe"` and screenshot: boxes in their own grey, text as bars, icons as blocks.
 - Name the masses. Two or three large shapes in a fixed order look calm; ten small ones look scattered.
 - Each mass has one job. A mass without a job goes.
 - One container language per screen: an input, a banner, a card, a tile, and a dashed tile in one column are four too many.
@@ -12,7 +12,7 @@ Start with the big picture: good detail cannot fix a wrong frame. Look at the sc
 ## Frames and regions
 
 - Every screen is one of a few frames: list, detail (main column and side panel), settings, editor, panel, dialog. A feature fills the frame's slots and keeps its header, toolbar, and column width.
-- One keyline: breadcrumb, title, and content start on one left edge on every page, so the title stays put between pages. The breadcrumb ends with the current page's name. `layout-meter.js` `frame` gives the title's and the crumb's position to compare across screens.
+- One keyline: breadcrumb, title, and content start on one left edge on every page, so the title stays put between pages. The breadcrumb ends with the current page's name.
 - Anchor content to that keyline. A column centered in a wide window moves away from the edge every other page shares.
 - Cap widths: prose at a readable measure, lists and tables wider. Past the cap, the rest of a wide screen stays empty.
 - Place the regions before polishing any of them.
@@ -46,8 +46,7 @@ Every group is held by space, type, tone, a line, or a box. Use the weakest that
 4. Line: a hairline divides fixed regions (bars, table rows, a panel's foot).
 5. Box: a border or shadow encloses what is edited or picked as one unit.
 
-- Test it as a Bauhaus designer would: `views.js` `textonly` strips boxes, lines, fills, and icons. Groups that still hold together need no box.
-- Then `views.js` `nolines` removes every line and shadow: keep the ones you miss, remove the ones you do not.
+- Test it as a Bauhaus designer would: `view.js` `textonly` strips boxes, lines, fills, and icons. Groups that still hold together need no box.
 - Plain text and a single list stand on the page without a frame.
 
 ## White space
@@ -65,7 +64,7 @@ Every group is held by space, type, tone, a line, or a box. Use the weakest that
 
 ## Far view
 
-Run `views.js` with `window.__view = "far"` and screenshot. The blur stands in for the screen seen small from across the room.
+Run `view.js` with `window.__view = "lead"` and screenshot. The grey blur stands in for the screen seen small from across the room; the three heaviest things are lettered, decoration dashed.
 
 - You can name the page.
 - One thing leads, and it is the thing the user came for.
@@ -77,6 +76,6 @@ Run `views.js` with `window.__view = "far"` and screenshot. The blur stands in f
 
 | Number | Target |
 | --- | --- |
-| `layout-meter.js` `boxes` | Fewer than before, or the same |
-| `layout-meter.js` `boxNesting` | 1 or less |
-| `layout-meter.js` `frame` | The same on neighbor screens at one window size; `crumbOffKeyline` false, `crumbEndsInTitle` true |
+| `redline.js` `lines` on the page | Fewer than before, or the same |
+| Boxes inside boxes | One box inside another at most |
+| Title and keyline | The same position on neighbor screens at one window size |

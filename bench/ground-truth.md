@@ -26,3 +26,7 @@ A Meetings list before its redesign.
 The details rail of a meeting.
 
 - "Assigned automatically" under the Program value: one more line and one more grey for a single fact, where an icon or nothing would do.
+
+## sources-after.html
+
+sources-before with its alignment fixed, for the before and after images: one 16px inset in every card, and text after an icon on one edge in the search field, the banner, and the rows. The other three defects stay.

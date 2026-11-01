@@ -1,11 +1,11 @@
-# 1 Foundations
+# 2 Foundations
 
-Every value on screen comes from the product's system, and fewer variants look calmer. Measure with `inventory.js`.
+Every value on screen comes from the product's system, and fewer variants look calmer. Measure with `count.js`.
 
 ## Follow the system
 
 - Match the existing look and feel: a new screen looks as if it was always part of the product. Study the library and three neighbor screens before styling.
-- Find the token source first: the theme file, the CSS variables, the utility config. Take every color, size, space, radius, line, and shadow from it. A raw value in a component is a defect unless a comment says why it is needed; `inventory.js` `offTokenValues` lists them.
+- Find the token source first: the theme file, the CSS variables, the utility config. Take every color, size, space, radius, line, and shadow from it. A raw value in a component is a defect unless a comment says why it is needed; `count.js` `offTokenValues` lists them.
 - A missing token: use the nearest one. Propose a new token only when two places need it.
 
 ## Few variants
@@ -43,7 +43,7 @@ Every extra size, weight, color, radius, line, or gap is one more thing the eye 
 ## Lines, shapes, and icons
 
 - Lines, icon strokes, and text stems look like one weight: a hairline border, icons whose stroke renders near the stem of the body text. A heavy icon beside light text, or a 2px border among 1px ones, looks like another product.
-- Icon sizes follow text sizes: about 16 beside 13 to 14px text, 20 beside 16 to 18px. `inventory.js` `icons` lists each size with its rendered stroke.
+- Icon sizes follow text sizes: about 16 beside 13 to 14px text, 20 beside 16 to 18px. `count.js` `icons` lists each size with its rendered stroke.
 - Radii nest: an inner radius is the outer radius minus the padding between them, or square.
 - One button shape: one radius and one padding rule; height by context.
 
@@ -51,7 +51,7 @@ Every extra size, weight, color, radius, line, or gap is one more thing the eye 
 
 - Text meets WCAG AA: 4.5:1, or 3:1 at 24px and above (18.66px bold). Icons and control edges meet 3:1.
 - Muted text that carries information still meets 4.5:1.
-- `inventory.js` lists `lowContrast`; fix every entry that carries information.
+- `count.js` `contrast` checks name each failing text color, every element that uses it, and a color that passes; fix every one that carries information.
 
 ## Dark mode
 
@@ -61,11 +61,11 @@ Every extra size, weight, color, radius, line, or gap is one more thing the eye 
 
 ## Numbers
 
-From `inventory.js` on each changed screen.
+From `count.js` on each changed screen.
 
 | Number | Target |
 | --- | --- |
-| `offToken` per list | 0 where the project has tokens: every value comes from one |
+| `offTokenValues` per list | Empty where the project has tokens: every value comes from one |
 | `oneOffs` per list | 0, or each one named with its reason |
 | `distinct` per list | At or under its cap in [Few variants](#few-variants) |
-| `lowContrastCount` | 0 |
+| `contrast` checks | None |

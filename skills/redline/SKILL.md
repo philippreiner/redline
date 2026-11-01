@@ -1,11 +1,13 @@
 ---
 name: redline
-description: Design, explore, review, or polish product UI and UX. Use for screens, flows, components, consistency passes, and UI diffs.
+description: Design, review, or polish anything a user sees: a new screen or flow, where information lives (pages, tabs, lists, navigation), a wireframe, click dummy, or set of variants, a consistency pass, a UI diff, and small tweaks to a menu, chip, row, spacing, alignment, or width.
 ---
 
 # Design
 
 You are the designer of the interface, the interaction, and the journey through the product. Delight users through clarity and care; treat your first idea as a draft and try others before settling. The goal is calm, distinct product UI.
+
+Work the way a world-class expert in this product's domain and in interaction and visual design would. The project's design rules (for example `DESIGN.md`) and component library are the defaults; ask what that expert would recommend, and where a rule would take away something users rely on or make the screen worse, do the better thing and name the rule you bent. Change a written rule only when the user asks.
 
 ## Principles
 
@@ -21,81 +23,74 @@ The rubric for every lens and for the critic.
 8. **Predictable.** The same thing looks and behaves the same everywhere, the way the tools users already know taught them. A newcomer can explain the screen in one sentence; each surprise needs a reason.
 9. **Plain words.** The user's words for their work. The label asks, the options answer.
 10. **Journey.** A screen continues where the user came from and leads to where they go next.
-11. **Distinct.** AI models tend toward the average screen. Give the product a point of view: a few signature moves (type, a mark, a way to show state) repeated on every screen, so it is recognizable from far away.
-
-## Levels
-
-Think in levels, as in atomic design:
-
-| Level | Atomic design | Examples |
-| --- | --- | --- |
-| Tokens | Below atoms | Color, type size, space, radius, line, shadow |
-| Parts | Atoms, molecules | Button, input, chip, row, field |
-| Regions | Organisms | Toolbar, list, form section, side panel |
-| Frames | Templates | List page, detail page, settings page, panel, dialog |
-| Screens | Pages | A frame with real content in one state |
-| Journeys | Flows | Screens in the order the user meets them |
-
-- Work on one level at a time and name it. Get it right locally (a part balanced inside, a region with one lead), then check globally how it composes into the level above.
-- Fix a problem at the level that owns it: a misplaced region is a frame fix, a one-off color a token fix.
-- Build bottom up; judge top down.
-- Choosing a frame, container, control, data view, or feedback: read the relevant [pattern library](references/pattern-library.md) section for use, example, and boundary.
+11. **Findable.** Every item has one home, nested as deep as it is rare, where people look for it first; similar things sit in similar places.
+12. **Distinct.** AI models tend toward the average screen. Give the product a point of view: a few signature moves (type, a mark, a way to show state) repeated on every screen, so it is recognizable from far away.
 
 ## Start
 
-- Read the project's design rules (for example `DESIGN.md`) and its component library first. Where they differ from this skill, the project's rules apply. When a rule makes a screen worse, do what works better and name the rule you bent.
-- Infer the platform and window sizes from the code: breakpoints, minimum widths, the shell. Without evidence, assume a desktop web app at 1440 wide and check 1024 once.
-- Write three lines before drawing: the question the user opens the screen to answer, in their words; the one move that serves it; the feeling it should leave (calm, in control, relieved, done). Two questions are two screens.
-- Find the precedent: the screen or part that already does this job. Match it and design only the difference.
-- Use realistic content: real lengths, real counts, the mature account, the longest translation.
-- See the screen: run the app or a mock with realistic data and screenshot each state you change. You cannot judge a design from its code.
-- Design what the product does. A new feature, field, or data model is the owner's call: ask.
+- **Known pattern.** Name the pattern this job calls for before drawing: the screen in this product that already does the job, the [pattern library](references/pattern-library.md) entry, and how a tool the users know solves it. Start from it and design only the difference.
+- **Settled decisions.** Keep a running list of what the user has decided in this thread ("no logo in the UI", "+ on the left", "no buttons on cards"), and save it beside a click dummy. Every variant, rebuild, and critic gets it.
+- **Content budget.** Real content at real lengths, the mature account, the longest translation. A first draft carries labels and data, no explanatory prose; a region holds at most three text sizes, a row two sizes and one emphasis.
+- **See it.** Screenshot every state you change. The app the user already runs, signed in, is the place to look; a mock with realistic data works too. You cannot judge a design from its code.
+- **Scope.** Design at the level the user asked for (the shell, a screen, a part) and what the product does. A new feature, field, or data model is the owner's call: ask.
+- **Platform.** Infer the window sizes from the code (breakpoints, minimum widths, the shell). Without evidence, assume desktop web at 1440 wide and check 1024 once.
+
+## Size the work
+
+- **Quick:** a tweak to a part or a region (a chip, a menu, a gap, an alignment, a width). Screenshot it, change it, run `redline.js` on the region, screenshot again, and hand over before and after. No lens files, no critic.
+- **Full:** a new screen, a flow, a rework, an exploration, or a click dummy. Work through the two gates below, run the lenses the change touches, then the critic.
+
+## Two gates
+
+1. **Structure and layout.** Where things live and how they nest (places, tabs, lists, sheets, links; the Structure lens), then the frame, the regions, their order, and what each region holds. Recommended for a new screen, a flow, or a layout change: show it first as a greyscale wireframe (grey boxes, text as bars, real content order, no styling) and let the user pick before any part gets styled. Skip it when the layout is settled or the user asks for a finished look.
+2. **Parts.** Once the layout holds: the parts in each region, then their atoms (type, color, icon, spacing), then the detail.
+
+Say which gate each answer is at. A part note while the layout is open is parked for the second gate. Fix a problem at the level that owns it: an item in the wrong place is a structure fix, a misplaced region a layout fix, a one-off color a token fix.
 
 ## Modes
 
-Pick the mode that fits; a task can mix two, such as a new feature inside a rework. When the user asks for a click dummy, build it with [click-dummy.md](references/click-dummy.md).
+Pick the mode that fits; a task can mix two, such as a new feature inside a rework. A click dummy, wireframe, or configurator follows [click-dummy.md](references/click-dummy.md).
 
-- **Explore** a new area or an open brief. Draft three to five directions from safe to bold before you study the current screens; the current design joins as one more candidate, named Current. Seed each direction away from the average: random bytes (`openssl rand -hex 4`) picking from short lists you wrote first, a constraint (no table), or an outside reference rebuilt in the product's style. Let one direction sound wrong. Settle the parts before the layouts. Present the directions side by side with what each gets right and what it costs, and recommend one.
-- **Consistency pass** on a code base whose screens have drifted apart. Start at the tokens: lay out every value `inventory.js` finds on the main screens on one page, with counts. Fold each raw value and one-off into its nearest token, and name the survivors as tokens and variants. Then parts on the reduced tokens, then layouts on the reduced parts, one level at a time across the product. Move every rule a linter can check into the linter. Done when the distinct counts fall and `offToken` and the one-offs reach zero.
-- **New feature** in an existing product. List the jobs it does (pick one, connect a system, show progress). For each, find what already does a similar job and decide: reuse, add a variant, or add a part to the library, with one line of reason. Mark each part of the proposal as existing, changed, or new. Take the best existing solution, even when the nearest screen does it worse. Enter from a place users already pass; lead to where they go next.
-- **Rework** of screens that work but look unsettled. Write down what works and keep it; map every complaint to one fix; keep every capability unless the owner cuts it. Loop short: one finding, fix, measure, look. Refine inside the settled concept; a new concept is an exploration and needs the owner's go. Show before and after per screen, one line per change. While the user iterates on visuals, they are the critic.
-- **Review** of a UI diff. Run the lenses on each changed screen and state, read the removed lines, and check every consumer of a changed shared part. A finding blocks the handover when it breaks access (name, focus, contrast), loses work without confirmation or Undo, or makes a screen worse than before; the rest are notes.
+- **Explore** a new area or an open brief. Before drawing, list the axes a direction can change: structure (layout topology, the dominant element), order (what comes first), density, emphasis, type, words, and the pattern. Draft three to five directions, each committed to a different axis, the rest following from it; directions that differ only in tint, weight, or chip style are one direction. One direction is the known pattern played straight, and the current design joins as Current. Seed the rest away from the average: random bytes (`openssl rand -hex 4`) picking from short lists of forms and outside references you wrote first. Let one direction sound wrong. The settled decisions and the access checks of the Detail lens hold in every direction. Present them side by side with what each gets right and what it costs, and recommend one.
+- **Consistency pass** on a code base whose screens have drifted apart. Start at the tokens: lay out every value `count.js` finds on the main screens on one page, with counts. Fold each raw value and one-off into its nearest token, and name the survivors as tokens and variants. Then parts on the reduced tokens, then layouts on the reduced parts, one level at a time across the product. Move every rule a linter can check into the linter. Done when the distinct counts fall and `offTokenValues` and the one-offs reach zero.
+- **New feature** in an existing product. List the jobs it does (pick one, connect a system, show progress). For each, decide: reuse, add a variant, or add a part to the library, with one line of reason. Mark each part of the proposal as existing, changed, or new. Take the best existing solution, even when the nearest screen does it worse. Enter from a place users already pass; lead to where they go next.
+- **Rework** of screens that work but look unsettled. Write down what works and what users rely on, and keep both; map every complaint to one fix; keep every capability unless the owner cuts it. Loop short: one finding, fix, measure, look. Refine inside the settled concept; a new concept is an exploration and needs the owner's go. Show before and after per screen, one line per change. While the user iterates on visuals, they are the critic.
+- **Review** of a UI diff. Run the lenses on each changed screen and state, read the removed lines, and check every consumer of a changed shared part. A finding blocks the handover when it breaks access (name, focus, contrast), loses work without confirmation or Undo, removes a control or a view users had, or makes a screen worse than before; the rest are notes.
 
 ## Lenses
 
-Design through all eight lenses on every task, in order; each builds on the ones before. A lens may find nothing, but it always runs. Per lens: read its file, look at the screenshot, run its tool, fix what fails, measure again.
+Each lens is a checklist for one topic. Run the ones the change touches; on a Full task run `measure.sh` on every region you change, and open a lens file when its topic is in play or a check points at it.
 
 | Lens | Asks | File | Tool |
 | --- | --- | --- | --- |
-| 1 Foundations | Follows the system, few variants, type, color, lines, contrast, dark | [foundations.md](references/foundations.md) | `inventory.js` |
-| 2 Components | Reuse, composable parts, the expected pattern, one look per object, parts in a region, inner balance | [components.md](references/components.md) | `heatmap.js`, `inventory.js` buttons, controls, icons |
-| 3 Layout | Grey boxes, frames, containers, depth, separation, white space, balance, far view | [layout.md](references/layout.md) | `views.js` wireframe, textonly, nolines, far |
-| 4 Hierarchy | First, second, third per level, groups, act where you look, what each level shows, cut | [hierarchy.md](references/hierarchy.md) | `views.js` notext, `text.js` loudest, actions |
-| 5 Detail | Length, density, variance with intent, states, zero data, speed, motion, feedback, browser, access | [detail.md](references/detail.md) | `stress.js`, `text.js` truncated, `inventory.js` access |
-| 6 Alignment | Edges, spacing scale, rhythm, sibling heights | [alignment.md](references/alignment.md) | `layout-meter.js` |
-| 7 Words | Plain, consistent, needed, works as text alone | [words.md](references/words.md) | `text.js` |
-| 8 Polish | Spot checks, before and after, clean code, the best we can do | [polish.md](references/polish.md) | Every tool, once |
+| 1 Structure | Places and homes, expose or nest, tabs, lists, sheets, links, URLs, similar things in similar places | [structure.md](references/structure.md) | A walk of the three main tasks |
+| 2 Foundations | Follows the system, few variants, type, color, lines, contrast, dark | [foundations.md](references/foundations.md) | `count.js` contrast, inventory, `offTokenValues` |
+| 3 Components | Reuse, composable parts, the expected pattern, one look per object, parts in a region, inner balance | [components.md](references/components.md) | `count.js` sibling, control, buttons, controls, icons |
+| 4 Layout | Grey boxes, frames, containers, depth, separation, white space, balance, far view | [layout.md](references/layout.md) | `view.js` bands, wireframe, textonly, lead |
+| 5 Hierarchy | First, second, third per level, groups, act where you look, what each level shows, cut | [hierarchy.md](references/hierarchy.md) | `view.js` lead, notext; `count.js` text |
+| 6 Detail | Length, density, variance with intent, states, zero data, speed, motion, feedback, browser, access | [detail.md](references/detail.md) | `view.js` long, many; `count.js` contrast, unnamed, smallTargets, text.valueFormats |
+| 7 Alignment | Shared edges, text styles per region, spacing scale, rhythm | [alignment.md](references/alignment.md) | `redline.js`; `view.js` bands, grid |
+| 8 Words | Plain, consistent, needed, works as text alone | [words.md](references/words.md) | `count.js` text |
+| 9 Polish | Spot checks, before and after, clean code, the best we can do | [polish.md](references/polish.md) | Every tool, once |
 
-- Each lens file ends with its numbers and their targets. Before you change anything, run `scripts/measure.sh <url> <before-dir> <region>`; it saves every script's numbers and screenshots. At the end, run it into an after folder; `--compare` lists every number that moved, for the lens table.
-- The tools are plain browser scripts in [`scripts/`](scripts/README.md). They count and point to candidates, and you decide by looking: every lens ends with you looking at a screenshot. Point each one at the region you are fixing (`window.__axesLayer`), one region at a time; on a whole page the shell's lines bury the finding.
-- Rebuild once on the findings and stop; a second rebuild means the frame was wrong.
+- The tools are three plain browser scripts in [`scripts/`](scripts/README.md): `redline.js` draws guide lines where things in one column share an edge, and across a row where texts of one style or card edges should share a line, and marks what sits 1 to 12px off one; `count.js` finds siblings, table cells, and controls that break with their own group, and text under contrast; `view.js` turns the page into a view to look at: bands (rhythm, empty space, collisions, cut or wrapped text), lead, grid, wireframe, text only, no text, and the long and many stress tests. Point them at the region you are fixing (`window.__axesLayer`); on a whole page the shell buries the check.
+- `scripts/measure.sh` runs them on the page already open in your browser session, signed in, saves every overlay and its JSON, and prints the minimum checks, each with where it is, what it is off from, and the edit. Run it before you change anything and again at the end; `--try <dir> <n> [fix.css]` tries a fix on the page before you edit the code, and `--compare` lists every number that moved.
+- The minimum checks are the floor of the review, not the review. Look at `redline.png` and `view-bands.png` yourself, region by region at 2x, for what no check names: a row whose same-size texts sit at different heights, a badge or label on text, a gap that differs by eye. Each check is a candidate you confirm on the image. Fix layout checks before parts. Rebuild once and stop; a second rebuild means the layout gate was wrong.
 
 ## Critic
 
-Fresh eyes on a new screen or an exploration, once the lenses hold.
+Fresh eyes on a Full task once the lenses hold. Skip it while the user is iterating on visuals: then they are the critic.
 
-- Give a fresh sub-agent only the screenshots and the user's question: no code, no reasoning, no account of what you meant.
-- Ask it to be bold, opinionated, and brief: score 1 to 10 against the principles, name the three weakest spots, and flag anything that looks generic or machine-made. A clean critique is a valid answer.
-- Fix and ask again. Stop at 9 or after two rounds; a third round means the frame is wrong, so go back to the Layout lens. Keep the stop rule out of the critic's prompt.
+- Give a fresh sub-agent the screenshots, the user's question in their words, and the settled decisions as fixed: no code, no reasoning, no account of what you meant. A new sub-agent each round.
+- Ask for the weakest spots, most severe first, each as: where on the screen, what fails, which user goal or principle it hurts, and the fix. A point without a fix is not a finding. Ask it to flag anything that looks generic or machine-made in the same form. A clean critique is a valid answer.
+- Fix and ask again. Stop after two rounds; a third round means the layout gate was wrong. Keep the stop rule out of the critic's prompt.
 - Without sub-agents, critique the screenshots yourself, as if seeing them for the first time.
 
 ## Done
 
-Done when every lens has a row in the lens table, with every rule in its file checked and every number in its Numbers section measured. End the answer with the outcome in a line or two, before and after screenshots, and the lens table:
+End the answer with:
 
-| Lens | Rules checked | Numbers, before → after | Fixed | Open |
-| --- | --- | --- | --- | --- |
-| 1 Foundations | 21 of 23; no dark theme yet | `fontSizes` 9 → 5, `oneOffs` 7 → 0 | Icon sizes follow text sizes | One muted grey |
-
-- Rules checked: how many of the file's rules (one bullet each, above its Numbers) you checked. On a mock, rules that need the running app (speed, motion, feedback, browser behavior) count as not checked, with that reason. Name each failed rule by its first words, under Fixed or Open.
-- One row per lens, plus the critic's score when it ran.
+- The outcome in a line or two, and which gate it reached.
+- Before and after screenshots of each changed screen or region.
+- The checks the last `measure.sh` run still prints, what you saw on its images, and the numbers that moved (`--compare`).
+- What is open: findings not fixed, rules bent, and checks not run (on a mock, speed, motion, feedback, and browser behavior).

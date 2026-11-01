@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>Maintra · Work orders</title>
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#fff; --line:#dde1e7; --line-soft:#eceff3;
+  --text:#18212d; --muted:#586374; --accent:#1b5fc7; --accent-dark:#174fa3; --accent-bg:#e8f0fc;
+  --nav:#111c2b; --nav-line:#24344d; --nav-text:#b4bfce;
+  --red:#b5301f; --red-bg:#fdecea; --orange:#9a4a06; --orange-bg:#fef0dc;
+  --green:#1b7042; --green-bg:#e3f4ea; --grey-bg:#e9edf3;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;min-width:1280px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,p,dl,dd,ul,ol{margin:0}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.muted{color:var(--muted)}
+.ic{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* shell */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.side{background:var(--nav);color:var(--nav-text);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:16px 12px 12px}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 16px;color:#fff;font-weight:700;font-size:17px}
+.brand i{width:28px;height:28px;border-radius:7px;background:var(--accent);display:grid;place-items:center;font-style:normal;font-size:14px}
+.plant{margin-bottom:16px;padding:10px 12px;border:1px solid var(--nav-line);border-radius:8px}
+.plant b{display:block;color:#fff;font-size:13px;font-weight:600}
+.plant span{font-size:12px}
+.nav{list-style:none;padding:0;display:grid;gap:2px}
+.nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--nav-text);font-weight:500}
+.nav a:hover{background:#1a2a40;color:#fff;text-decoration:none}
+.nav a[aria-current=page]{background:#233756;color:#fff}
+.nav .n{margin-left:auto;font-size:12px;background:#2b3f5f;color:#dbe4f0;padding:1px 8px;border-radius:10px}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:12px 8px 0;border-top:1px solid var(--nav-line);font-size:13px}
+.me b{display:block;color:#fff;font-weight:600}
+.me span.r{font-size:12px}
+
+main{padding:24px 32px 56px}
+.crumbs{display:flex;gap:8px;font-size:13px;color:var(--muted);margin-bottom:12px}
+.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:16px}
+h1{font-size:24px;line-height:1.25;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--muted);margin-top:4px}
+.chips{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.actions{display:flex;gap:8px;flex:none}
+
+.btn{height:34px;padding:0 14px;border:1px solid #c5cdd8;border-radius:7px;background:#fff;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#f3f5f8}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-dark)}
+.btn.icon{padding:0;width:34px;justify-content:center}
+.btn.sm{height:30px;padding:0 10px;font-size:12px}
+
+/* badges */
+.st{display:inline-block;padding:2px 9px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap}
+.st.open{background:var(--grey-bg);color:#33415c}
+.st.progress{background:var(--accent-bg);color:#154a9c}
+.st.hold{background:var(--orange-bg);color:var(--orange)}
+.st.done{background:var(--green-bg);color:var(--green)}
+.st.down{background:var(--red-bg);color:var(--red)}
+.prio{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.prio::before{content:"";width:8px;height:8px;border-radius:50%;background:#8b95a5}
+.prio.urgent::before{background:#d23a27}
+.prio.urgent{font-weight:600;color:var(--red)}
+.prio.high::before{background:#e98a1a}
+.prio.medium::before{background:#d9bb2a}
+.av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:11px;font-weight:700;flex:none;background:hsl(var(--h,210) 45% 90%);color:hsl(var(--h,210) 55% 26%)}
+.av.lg{width:32px;height:32px;font-size:12px}
+.av.none{background:#fff;border:1px dashed #9aa4b2;color:#586374}
+.who{display:inline-flex;align-items:center;gap:8px}
+
+/* list */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs a{padding:8px 12px;margin-bottom:-1px;border-bottom:2px solid transparent;color:var(--muted);font-weight:600}
+.tabs a:hover{color:var(--text);text-decoration:none}
+.tabs a[aria-current]{color:var(--accent);border-color:var(--accent)}
+.tabs .count{font-size:12px;font-weight:600;background:var(--grey-bg);border-radius:10px;padding:1px 7px;margin-left:4px;color:var(--muted)}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.search{position:relative;width:280px}
+.search .ic{position:absolute;left:10px;top:9px;color:var(--muted)}
+.search input{width:100%;height:34px;padding:0 10px 0 33px;border:1px solid #c5cdd8;border-radius:7px;background:#fff}
+select{height:34px;padding:0 28px 0 10px;border:1px solid #c5cdd8;border-radius:7px;font-size:13px;appearance:none;-webkit-appearance:none;
+  background:#fff linear-gradient(45deg,transparent 50%,#586374 50%) calc(100% - 16px) 15px/5px 5px no-repeat,linear-gradient(135deg,#586374 50%,transparent 50%) calc(100% - 11px) 15px/5px 5px no-repeat}
+.seg{margin-left:auto;display:flex;border:1px solid #c5cdd8;border-radius:7px;overflow:hidden;background:#fff}
+.seg button{height:32px;padding:0 12px;border:0;border-left:1px solid var(--line);background:#fff;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed=true]{background:var(--accent-bg);color:var(--accent)}
+
+.tbl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
+.tbl th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);padding:10px 8px;background:#f8f9fb;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:0 8px;height:44px;border-bottom:1px solid var(--line-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover{background:#f8fafd}
+.tbl a.id{font-weight:600}
+.tbl a.title{color:var(--text);font-weight:500}
+.tbl a.title:hover{color:var(--accent)}
+.tbl .late{color:var(--red);font-weight:600}
+.tbl input[type=checkbox]{width:16px;height:16px;margin:0;display:block;accent-color:var(--accent)}
+.tbl.roomy td{height:48px}
+.chk{display:inline-flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.bar{width:34px;height:6px;border-radius:3px;background:#e1e6ed;overflow:hidden;display:inline-block}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar.full i{background:#2c9a5f}
+.pager{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.pager div{display:flex;gap:4px}
+.pager .btn{height:30px;padding:0 10px;font-size:12px}
+.pager .btn[aria-current]{background:var(--accent-bg);border-color:#b9cff2;color:var(--accent)}
+
+/* cards and layout */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.card>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line-soft)}
+.card h2{font-size:15px;font-weight:600}
+.card .hint{font-size:13px;color:var(--muted)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
+.cols.wide-aside{grid-template-columns:minmax(0,1fr) 360px}
+.stack{display:grid;gap:20px}
+.facts{display:grid;grid-template-columns:repeat(5,1fr);margin-bottom:24px}
+.facts>div{padding:14px 18px;border-left:1px solid var(--line-soft)}
+.facts>div:first-child{border-left:0}
+.facts dt{font-size:12px;color:var(--muted);margin-bottom:6px}
+.facts dd{font-weight:600;display:flex;align-items:center;gap:8px;min-height:24px}
+.kv{display:grid;grid-template-columns:112px minmax(0,1fr);gap:9px 12px;padding:14px 18px;font-size:13px}
+.kv dt{color:var(--muted)}
+.kv dd{font-weight:500}
+.pad{padding:14px 18px}
+.desc p+p{margin-top:8px}
+.note{margin-top:12px;padding:10px 12px;border-radius:7px;background:var(--orange-bg);color:#6e3604;font-size:13px}
+
+.progress-line{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.progress-line .bar{width:120px}
+.steps{list-style:none;padding:0}
+.steps li{display:flex;gap:12px;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line-soft)}
+.steps li:last-child{border-bottom:0}
+.steps input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+.steps label{flex:1;cursor:pointer}
+.steps .t{display:block;font-weight:500}
+.steps .m{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.steps input:checked+label .t{color:var(--muted)}
+.steps .val{margin-left:auto;font-size:12px;font-weight:600;background:var(--grey-bg);padding:2px 8px;border-radius:5px;white-space:nowrap}
+
+.tbl td.num,.tbl th.num{text-align:right}
+.tbl tfoot td{font-weight:600;background:#f8f9fb;border-top:1px solid var(--line);border-bottom:0}
+.sub2{display:block;font-size:12px;color:var(--muted)}
+.tbl td.wrap{white-space:normal}
+
+.composer{padding:14px 18px;border-bottom:1px solid var(--line-soft)}
+.composer textarea{width:100%;min-height:68px;padding:9px 10px;border:1px solid #c5cdd8;border-radius:7px;resize:vertical;display:block}
+.composer .row{display:flex;justify-content:space-between;margin-top:8px}
+.feed{list-style:none;padding:0}
+.feed li{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line-soft)}
+.feed li:last-child{border-bottom:0}
+.feed .body{flex:1;min-width:0}
+.feed .head{font-size:13px}
+.feed .when{color:var(--muted);font-size:12px;margin-left:6px}
+.feed p{margin-top:4px}
+.feed .sys{padding:10px 18px;color:var(--muted);font-size:13px;align-items:center}
+.feed .sys b{color:var(--text);font-weight:600}
+.feed .pt{width:24px;display:grid;place-items:center;flex:none}
+.feed .pt::before{content:"";width:8px;height:8px;border-radius:50%;background:#a9b2c0}
+.photos{display:flex;gap:8px;margin-top:10px}
+.photo{width:168px;height:112px;border-radius:6px;background:#d9dde3;display:grid;place-items:center;color:#4b5563;font-size:12px}
+
+.aside .card+.card{margin-top:20px}
+.asset-mini{display:flex;gap:12px;padding:14px 18px;align-items:center}
+.thumb{width:56px;height:56px;border-radius:8px;background:#d9dde3;flex:none;display:grid;place-items:center;font-size:11px;color:#4b5563}
+.meters{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 18px}
+.meters b{display:block;font-size:20px;line-height:1.2;font-variant-numeric:tabular-nums}
+.meters span{font-size:12px;color:var(--muted)}
+.rel{list-style:none;padding:0}
+.rel li{padding:10px 18px;border-bottom:1px solid var(--line-soft);display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:13px}
+.rel li:last-child{border-bottom:0}
+.rel .tt{grid-column:1/-1;color:var(--text)}
+.path{display:flex;flex-wrap:wrap;gap:4px 6px;padding:14px 18px;font-size:13px}
+.path span:not(:last-child)::after{content:"›";margin-left:6px;color:var(--muted)}
+.path span:last-child{font-weight:600}
+
+/* asset */
+.asset-head{display:flex;gap:20px;align-items:flex-start;margin-bottom:24px}
+.asset-head .thumb{width:88px;height:88px;border-radius:10px;font-size:12px}
+.asset-head .page-head{flex:1;margin-bottom:0}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line-soft)}
+.kpis>div{padding:14px 18px;border-left:1px solid var(--line-soft)}
+.kpis>div:first-child{border-left:0}
+.kpis dt{font-size:12px;color:var(--muted)}
+.kpis dd{font-size:24px;font-weight:700;line-height:1.3;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpis small{display:block;font-size:12px;font-weight:500;color:var(--muted)}
+.kpis .bad{color:var(--red)}
+.chart{padding:20px 18px 14px}
+.plot{position:relative;height:140px;display:flex;gap:10px;align-items:flex-end;border-bottom:1px solid #b9c1ce}
+.plot .b{flex:1;position:relative;border-radius:3px 3px 0 0;background:#4d86dc}
+.plot .b.low{background:#d0503e}
+.plot .b b{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:12px;font-weight:500}
+.plot .target{position:absolute;left:0;right:0;bottom:100px;border-top:1px dashed #6b7686}
+.plot .target span{position:absolute;right:0;top:-18px;font-size:12px;color:var(--muted);background:#fff;padding-left:6px}
+.weeks{display:flex;gap:10px;margin-top:6px}
+.weeks span{flex:1;text-align:center;font-size:12px;color:var(--muted)}
+.ft{padding:12px 18px;border-top:1px solid var(--line-soft);font-size:13px}
+.docs{list-style:none;padding:0}
+.docs li{display:flex;gap:12px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line-soft);font-size:13px}
+.docs li:last-child{border-bottom:0}
+.docs .ext{width:34px;height:34px;border-radius:6px;background:var(--grey-bg);display:grid;place-items:center;font-size:11px;font-weight:700;color:#33415c;flex:none}
+.docs a{font-weight:500;display:block}
+.docs small{color:var(--muted);font-size:12px}
+.type{font-size:12px;font-weight:600;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-orders" viewBox="0 0 24 24"><path d="M9 4h6v3H9z"/><path d="M15 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></symbol>
+  <symbol id="i-assets" viewBox="0 0 24 24"><path d="M3 21V11l6 4v-4l6 4V5h6v16z"/></symbol>
+  <symbol id="i-pm" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-parts" viewBox="0 0 24 24"><path d="M12 3 3 7.5v9L12 21l9-4.5v-9z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></symbol>
+  <symbol id="i-requests" viewBox="0 0 24 24"><path d="M3 13h5l1 3h6l1-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/></symbol>
+  <symbol id="i-reports" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M7 14h10v7H7z"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+</svg>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><i>M</i> Maintra</div>
+    <div class="plant"><b>Werk Ingolstadt</b><span>Donau Antriebstechnik GmbH</span></div>
+    <nav aria-label="Primary">
+      <ul class="nav">
+        <li><a href="#work-orders" data-nav="work-orders work-order"><svg class="ic"><use href="#i-orders"/></svg>Work orders<span class="n">148</span></a></li>
+        <li><a href="#asset" data-nav="asset"><svg class="ic"><use href="#i-assets"/></svg>Assets</a></li>
+        <li><a href="#"><svg class="ic"><use href="#i-pm"/></svg>Preventive maintenance</a></li>
+        <li><a href="#"><svg class="ic"><use href="#i-parts"/></svg>Parts</a></li>
+        <li><a href="#"><svg class="ic"><use href="#i-requests"/></svg>Requests<span class="n">7</span></a></li>
+        <li><a href="#"><svg class="ic"><use href="#i-reports"/></svg>Reports</a></li>
+        <li><a href="#"><svg class="ic"><use href="#i-settings"/></svg>Settings</a></li>
+      </ul>
+    </nav>
+    <div class="me"><span class="av lg" style="--h:180">AS</span><div><b>Anika Schmid</b><span class="r">Maintenance planner</span></div></div>
+  </aside>
+
+  <div>
+  <!-- ===================== WORK ORDERS LIST ===================== -->
+  <main id="work-orders">
+    <div class="page-head">
+      <div>
+        <h1>Work orders</h1>
+        <p class="sub">Werk Ingolstadt, all halls · 148 work orders</p>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button">Export</button>
+        <button class="btn primary" type="button"><svg class="ic"><use href="#i-plus"/></svg>New work order</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <a href="#" aria-current="true">All<span class="count">148</span></a>
+      <a href="#">Assigned to me<span class="count">12</span></a>
+      <a href="#">Overdue<span class="count">9</span></a>
+      <a href="#">Unassigned<span class="count">6</span></a>
+      <a href="#">Done this week<span class="count">23</span></a>
+    </div>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg class="ic"><use href="#i-search"/></svg>
+        <input id="q" type="search" placeholder="Search by ID, title, or asset" aria-label="Search work orders">
+      </div>
+      <select id="f-status" aria-label="Status">
+        <option value="">All statuses</option><option>Open</option><option>In progress</option><option>On hold</option><option>Done</option>
+      </select>
+      <select id="f-priority" aria-label="Priority">
+        <option value="">All priorities</option><option>Urgent</option><option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <select id="f-assignee" aria-label="Assignee">
+        <option value="">All assignees</option><option>Anika</option><option>Jonas</option><option>Katrin</option><option>Lukas</option><option>Mehmet</option><option>Stefan</option><option>Tobias</option><option>Unassigned</option>
+      </select>
+      <select id="f-asset" aria-label="Asset">
+        <option value="">All assets</option><option>AHU-4</option><option>C-02</option><option>CH-01</option><option>CNC-221</option><option>CS-02</option><option>CV-109</option><option>CV-114</option><option>EF-11</option><option>FL-09</option><option>FS-01</option><option>HP-300</option><option>K-2</option><option>PL-03</option><option>R-03</option><option>R-07</option><option>T-12</option><option>Halle 2</option>
+      </select>
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" aria-pressed="true"><svg class="ic"><use href="#i-list"/></svg>List</button>
+        <button type="button" aria-pressed="false"><svg class="ic"><use href="#i-board"/></svg>Board</button>
+        <button type="button" aria-pressed="false"><svg class="ic"><use href="#i-pm"/></svg>Calendar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <table class="tbl">
+        <caption class="sr">Work orders, newest first</caption>
+        <colgroup><col style="width:36px"><col style="width:80px"><col style="width:280px"><col style="width:130px"><col style="width:144px"><col style="width:92px"><col style="width:106px"><col style="width:120px"><col style="width:64px"><col style="width:88px"></colgroup>
+        <thead>
+          <tr>
+            <th><input type="checkbox" aria-label="Select all work orders"></th>
+            <th>ID</th><th>Title</th><th>Asset</th><th>Location</th><th>Priority</th><th>Status</th><th>Assignee</th><th>Due</th><th>Checklist</th>
+          </tr>
+        </thead>
+        <tbody id="wo-body">
+<tr data-status="Open" data-priority="Low" data-assignee="Jonas" data-asset="HP-300"><td><input type="checkbox" aria-label="Select WO-1051"></td><td><a class="id" href="#">WO-1051</a></td><td><a class="title" href="#">Inspect hydraulic hoses and fittings</a></td><td><a href="#asset">Press HP-300</a></td><td>Halle 2 · Line 3</td><td><span class="prio low">Low</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:210">JW</span>Jonas</span></td><td>24 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/5</span></td></tr>
+<tr data-status="Open" data-priority="Urgent" data-assignee="Katrin" data-asset="CV-114"><td><input type="checkbox" aria-label="Select WO-1047"></td><td><a class="id" href="#">WO-1047</a></td><td><a class="title" href="#">Replace SKF 6205-2RS bearings, CV-114</a></td><td>Conveyor CV-114</td><td>Halle 2 · Line 1</td><td><span class="prio urgent">Urgent</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:340">KH</span>Katrin</span></td><td>2 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/6</span></td></tr>
+<tr data-status="In progress" data-priority="High" data-assignee="Jonas" data-asset="HP-300"><td><input type="checkbox" aria-label="Select WO-1042"></td><td><a class="id" href="#work-order">WO-1042</a></td><td><a class="title" href="#work-order">Replace hydraulic seal on press line 3</a></td><td><a href="#asset">Press HP-300</a></td><td>Halle 2 · Line 3</td><td><span class="prio high">High</span></td><td><span class="st progress">In progress</span></td><td><span class="who"><span class="av" style="--h:210">JW</span>Jonas</span></td><td>3 Nov</td><td><span class="chk"><span class="bar"><i style="width:50%"></i></span>4/8</span></td></tr>
+<tr data-status="Open" data-priority="Medium" data-assignee="Mehmet" data-asset="CNC-221"><td><input type="checkbox" aria-label="Select WO-1041"></td><td><a class="id" href="#">WO-1041</a></td><td><a class="title" href="#">Lubricate spindle bearings, CNC-221</a></td><td>Mill CNC-221</td><td>Halle 1 · Machining</td><td><span class="prio medium">Medium</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:30">MY</span>Mehmet</span></td><td>6 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/5</span></td></tr>
+<tr data-status="On hold" data-priority="Medium" data-assignee="Stefan" data-asset="C-02"><td><input type="checkbox" aria-label="Select WO-1039"></td><td><a class="id" href="#">WO-1039</a></td><td><a class="title" href="#">Compressor C-02 service at 4,000 h</a></td><td>Compressor C-02</td><td>Energy centre</td><td><span class="prio medium">Medium</span></td><td><span class="st hold">On hold</span></td><td><span class="who"><span class="av" style="--h:150">SB</span>Stefan</span></td><td>9 Nov</td><td><span class="chk"><span class="bar"><i style="width:33%"></i></span>3/9</span></td></tr>
+<tr data-status="In progress" data-priority="Urgent" data-assignee="Lukas" data-asset="R-07"><td><input type="checkbox" aria-label="Select WO-1038"></td><td><a class="id" href="#">WO-1038</a></td><td><a class="title" href="#">Robot R-07: tip dresser fault E412</a></td><td>Robot R-07</td><td>Halle 2 · Cell 7</td><td><span class="prio urgent">Urgent</span></td><td><span class="st progress">In progress</span></td><td><span class="who"><span class="av" style="--h:270">LM</span>Lukas</span></td><td class="late">30 Oct<span class="sr"> (overdue)</span></td><td><span class="chk"><span class="bar"><i style="width:40%"></i></span>2/5</span></td></tr>
+<tr data-status="Open" data-priority="High" data-assignee="Anika" data-asset="PL-03"><td><input type="checkbox" aria-label="Select WO-1036"></td><td><a class="id" href="#">WO-1036</a></td><td><a class="title" href="#">Replace light curtain on palletizer PL-03</a></td><td>Palletizer PL-03</td><td>Logistics · Dispatch</td><td><span class="prio high">High</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:180">AS</span>Anika</span></td><td>4 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/7</span></td></tr>
+<tr data-status="Done" data-priority="Low" data-assignee="Mehmet" data-asset="CS-02"><td><input type="checkbox" aria-label="Select WO-1035"></td><td><a class="id" href="#">WO-1035</a></td><td><a class="title" href="#">Check coolant concentration, line 2</a></td><td>Coolant CS-02</td><td>Halle 1 · Machining</td><td><span class="prio low">Low</span></td><td><span class="st done">Done</span></td><td><span class="who"><span class="av" style="--h:30">MY</span>Mehmet</span></td><td>29 Oct</td><td><span class="chk"><span class="bar full"><i style="width:100%"></i></span>4/4</span></td></tr>
+<tr data-status="Open" data-priority="Medium" data-assignee="Anika" data-asset="T-12"><td><input type="checkbox" aria-label="Select WO-1033"></td><td><a class="id" href="#">WO-1033</a></td><td><a class="title" href="#">Calibrate torque tool station T-12</a></td><td>Station T-12</td><td>Halle 2 · Station 12</td><td><span class="prio medium">Medium</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:180">AS</span>Anika</span></td><td>12 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/6</span></td></tr>
+<tr data-status="Open" data-priority="Low" data-assignee="Stefan" data-asset="AHU-4"><td><input type="checkbox" aria-label="Select WO-1031"></td><td><a class="id" href="#">WO-1031</a></td><td><a class="title" href="#">Replace filter bank on air handler AHU-4</a></td><td>Air unit AHU-4</td><td>Halle 3 · Paint shop</td><td><span class="prio low">Low</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:150">SB</span>Stefan</span></td><td>16 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/4</span></td></tr>
+<tr data-status="On hold" data-priority="High" data-assignee="Jonas" data-asset="K-2"><td><input type="checkbox" aria-label="Select WO-1029"></td><td><a class="id" href="#">WO-1029</a></td><td><a class="title" href="#">Gearbox oil leak on overhead crane K-2</a></td><td>Crane K-2</td><td>Halle 1 · Bay B</td><td><span class="prio high">High</span></td><td><span class="st hold">On hold</span></td><td><span class="who"><span class="av" style="--h:210">JW</span>Jonas</span></td><td>5 Nov</td><td><span class="chk"><span class="bar"><i style="width:17%"></i></span>1/6</span></td></tr>
+<tr data-status="Done" data-priority="Low" data-assignee="Jonas" data-asset="HP-300"><td><input type="checkbox" aria-label="Select WO-1027"></td><td><a class="id" href="#">WO-1027</a></td><td><a class="title" href="#">Hydraulic oil sample for lab analysis</a></td><td><a href="#asset">Press HP-300</a></td><td>Halle 2 · Line 3</td><td><span class="prio low">Low</span></td><td><span class="st done">Done</span></td><td><span class="who"><span class="av" style="--h:210">JW</span>Jonas</span></td><td>22 Oct</td><td><span class="chk"><span class="bar full"><i style="width:100%"></i></span>3/3</span></td></tr>
+<tr data-status="Open" data-priority="Medium" data-assignee="Tobias" data-asset="FL-09"><td><input type="checkbox" aria-label="Select WO-1026"></td><td><a class="id" href="#">WO-1026</a></td><td><a class="title" href="#">Annual safety inspection, forklift FL-09</a></td><td>Forklift FL-09</td><td>Logistics · Yard</td><td><span class="prio medium">Medium</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:50">TW</span>Tobias</span></td><td>10 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/12</span></td></tr>
+<tr data-status="In progress" data-priority="Medium" data-assignee="Katrin" data-asset="EF-11"><td><input type="checkbox" aria-label="Select WO-1024"></td><td><a class="id" href="#">WO-1024</a></td><td><a class="title" href="#">Replace drive belt, extraction fan EF-11</a></td><td>Fan EF-11</td><td>Halle 3 · Roof</td><td><span class="prio medium">Medium</span></td><td><span class="st progress">In progress</span></td><td><span class="who"><span class="av" style="--h:340">KH</span>Katrin</span></td><td>3 Nov</td><td><span class="chk"><span class="bar"><i style="width:60%"></i></span>3/5</span></td></tr>
+<tr data-status="Done" data-priority="High" data-assignee="Lukas" data-asset="FS-01"><td><input type="checkbox" aria-label="Select WO-1022"></td><td><a class="id" href="#">WO-1022</a></td><td><a class="title" href="#">Reset PLC fault on filling station FS-01</a></td><td>Filler FS-01</td><td>Halle 2 · Filling</td><td><span class="prio high">High</span></td><td><span class="st done">Done</span></td><td><span class="who"><span class="av" style="--h:270">LM</span>Lukas</span></td><td>28 Oct</td><td><span class="chk"><span class="bar full"><i style="width:100%"></i></span>3/3</span></td></tr>
+<tr data-status="Open" data-priority="Low" data-assignee="Unassigned" data-asset="Halle 2"><td><input type="checkbox" aria-label="Select WO-1021"></td><td><a class="id" href="#">WO-1021</a></td><td><a class="title" href="#">Inspect fire door seals, Halle 2</a></td><td>Halle 2</td><td>Halle 2 · Building</td><td><span class="prio low">Low</span></td><td><span class="st open">Open</span></td><td><span class="who muted"><span class="av none">–</span>Unassigned</span></td><td>20 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/8</span></td></tr>
+<tr data-status="Open" data-priority="Medium" data-assignee="Lukas" data-asset="CV-109"><td><input type="checkbox" aria-label="Select WO-1019"></td><td><a class="id" href="#">WO-1019</a></td><td><a class="title" href="#">Replace Balluff BES 516 sensor, CV-109</a></td><td>Conveyor CV-109</td><td>Halle 2 · Line 2</td><td><span class="prio medium">Medium</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:270">LM</span>Lukas</span></td><td>5 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/3</span></td></tr>
+<tr data-status="Done" data-priority="Medium" data-assignee="Jonas" data-asset="HP-300"><td><input type="checkbox" aria-label="Select WO-1018"></td><td><a class="id" href="#">WO-1018</a></td><td><a class="title" href="#">Quarterly lubrication, press HP-300</a></td><td><a href="#asset">Press HP-300</a></td><td>Halle 2 · Line 3</td><td><span class="prio medium">Medium</span></td><td><span class="st done">Done</span></td><td><span class="who"><span class="av" style="--h:210">JW</span>Jonas</span></td><td>15 Oct</td><td><span class="chk"><span class="bar full"><i style="width:100%"></i></span>6/6</span></td></tr>
+<tr data-status="In progress" data-priority="Medium" data-assignee="Stefan" data-asset="CH-01"><td><input type="checkbox" aria-label="Select WO-1016"></td><td><a class="id" href="#">WO-1016</a></td><td><a class="title" href="#">Refrigerant pressure check, chiller CH-01</a></td><td>Chiller CH-01</td><td>Energy centre</td><td><span class="prio medium">Medium</span></td><td><span class="st progress">In progress</span></td><td><span class="who"><span class="av" style="--h:150">SB</span>Stefan</span></td><td class="late">27 Oct<span class="sr"> (overdue)</span></td><td><span class="chk"><span class="bar"><i style="width:33%"></i></span>2/6</span></td></tr>
+<tr data-status="Open" data-priority="Medium" data-assignee="Anika" data-asset="R-03"><td><input type="checkbox" aria-label="Select WO-1014"></td><td><a class="id" href="#">WO-1014</a></td><td><a class="title" href="#">Replace gripper jaws on robot R-03</a></td><td>Robot R-03</td><td>Halle 2 · Line 2</td><td><span class="prio medium">Medium</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:180">AS</span>Anika</span></td><td>13 Nov</td><td><span class="chk"><span class="bar"><i style="width:0"></i></span>0/4</span></td></tr>
+<tr id="wo-empty" hidden><td colspan="10" style="text-align:center;color:var(--muted);height:96px">No work orders match these filters.</td></tr>
+        </tbody>
+      </table>
+      <div class="pager">
+        <span id="wo-count">Showing 1–20 of 148</span>
+        <div>
+          <button class="btn" type="button" disabled>Previous</button>
+          <button class="btn" type="button" aria-current="page">1</button>
+          <button class="btn" type="button">2</button>
+          <button class="btn" type="button">3</button>
+          <button class="btn" type="button">8</button>
+          <button class="btn" type="button">Next</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== WORK ORDER DETAIL ===================== -->
+  <main id="work-order" hidden>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="#work-orders">Work orders</a><span aria-hidden="true">/</span><span>WO-1042</span></nav>
+
+    <div class="page-head">
+      <div>
+        <h1>Replace hydraulic seal on press line 3</h1>
+        <p class="sub">WO-1042 · Corrective · Created 29 Oct 2026 by Dieter Huber from request REQ-2209</p>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button">Put on hold</button>
+        <button class="btn" type="button"><svg class="ic"><use href="#i-print"/></svg>Print</button>
+        <button class="btn icon" type="button" aria-label="More actions"><svg class="ic"><use href="#i-more"/></svg></button>
+        <button class="btn primary" type="button">Complete work order</button>
+      </div>
+    </div>
+
+    <dl class="facts card">
+      <div><dt>Status</dt><dd><span class="st progress">In progress</span></dd></div>
+      <div><dt>Priority</dt><dd><span class="prio high">High</span></dd></div>
+      <div><dt>Due date</dt><dd>Tue 3 Nov 2026</dd></div>
+      <div><dt>Assignee</dt><dd><span class="av" style="--h:210">JW</span>Jonas Weber</dd></div>
+      <div><dt>Estimated time</dt><dd>8 h</dd></div>
+    </dl>
+
+    <div class="cols">
+      <div class="stack">
+        <section class="card">
+          <header><h2>Description</h2></header>
+          <div class="pad desc">
+            <p>Hydraulic oil is leaking at the main cylinder rod seal of press HP-300, about 0.4 l per shift. Strokes were slow on the last 20 parts of the late shift.</p>
+            <p>Replace rod seal and wiper ring, check the rod surface for scoring, refill with ISO VG 46 and bleed the circuit. Run 20 test strokes before release to production.</p>
+            <p class="note">Lockout/tagout required. Release accumulator pressure before opening the circuit. See LOTO procedure, press line 3.</p>
+          </div>
+        </section>
+
+        <section class="card">
+          <header>
+            <h2>Procedure checklist</h2>
+            <div class="progress-line"><span id="steps-count">4 of 8 steps</span><span class="bar"><i id="steps-bar" style="width:50%"></i></span></div>
+          </header>
+          <ol class="steps">
+            <li><input id="s1" type="checkbox" checked><label for="s1"><span class="t">Apply lockout/tagout and verify zero energy</span><span class="m">Jonas Weber · 30 Oct, 06:52</span></label></li>
+            <li><input id="s2" type="checkbox" checked><label for="s2"><span class="t">Release accumulator pressure, drain main cylinder circuit</span><span class="m">Jonas Weber · 30 Oct, 07:30</span></label></li>
+            <li><input id="s3" type="checkbox" checked><label for="s3"><span class="t">Remove cylinder head and extract piston rod</span><span class="m">Jonas Weber, Mehmet Yilmaz · 30 Oct, 08:40</span></label></li>
+            <li><input id="s4" type="checkbox" checked><label for="s4"><span class="t">Inspect rod surface for scoring (max. Ra 0.2 µm)</span><span class="m">Jonas Weber · 30 Oct, 09:10</span></label><span class="val">Ra 0.18 µm</span></li>
+            <li><input id="s5" type="checkbox"><label for="s5"><span class="t">Replace rod seal and wiper ring</span></label></li>
+            <li><input id="s6" type="checkbox"><label for="s6"><span class="t">Refit rod and torque head bolts to 280 Nm</span><span class="m">Measurement required</span></label></li>
+            <li><input id="s7" type="checkbox"><label for="s7"><span class="t">Refill ISO VG 46 hydraulic oil and bleed circuit</span></label></li>
+            <li><input id="s8" type="checkbox"><label for="s8"><span class="t">Run 20 test strokes, check for leaks, remove lockout/tagout</span><span class="m">Photo required</span></label></li>
+          </ol>
+        </section>
+
+        <section class="card">
+          <header><h2>Parts used</h2><button class="btn sm" type="button"><svg class="ic"><use href="#i-plus"/></svg>Add part</button></header>
+          <table class="tbl roomy">
+            <caption class="sr">Parts for WO-1042</caption>
+            <colgroup><col><col style="width:190px"><col style="width:56px"><col style="width:56px"><col style="width:200px"></colgroup>
+            <thead><tr><th>Part</th><th>Part no.</th><th class="num">Qty</th><th class="num">Used</th><th>In stock</th></tr></thead>
+            <tbody>
+              <tr><td>Rod seal kit, Ø160 mm</td><td>Hallite 605-160</td><td class="num">1</td><td class="num">0</td><td>4 · Bin B-14-02</td></tr>
+              <tr><td>Wiper ring, Ø160 mm</td><td>Hallite 705-160</td><td class="num">1</td><td class="num">0</td><td><span class="st down">Out of stock</span> <span class="muted">due 2 Nov</span></td></tr>
+              <tr><td>O-ring 170 × 5 mm, NBR 70</td><td>ISO 3601</td><td class="num">4</td><td class="num">0</td><td>40 · Bin B-02-11</td></tr>
+              <tr><td>Hex bolt M20 × 70, 10.9</td><td>DIN 933</td><td class="num">8</td><td class="num">0</td><td>24 · Bin C-05-03</td></tr>
+              <tr><td>Hydraulic oil, 20 l canister</td><td>Shell Tellus S2 M 46</td><td class="num">2</td><td class="num">0</td><td>6 · Oil store</td></tr>
+              <tr><td>Return filter element</td><td>Hydac 0160 D 010 BN4HC</td><td class="num">1</td><td class="num">1</td><td>3 · Bin B-09-01</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <header><h2>Time logged</h2><button class="btn sm" type="button"><svg class="ic"><use href="#i-clock"/></svg>Start timer</button></header>
+          <table class="tbl roomy">
+            <caption class="sr">Time entries for WO-1042</caption>
+            <colgroup><col style="width:130px"><col style="width:160px"><col style="width:130px"><col style="width:90px"><col></colgroup>
+            <thead><tr><th>Date</th><th>Technician</th><th>Time</th><th class="num">Duration</th><th>Note</th></tr></thead>
+            <tbody>
+              <tr><td>Fri 30 Oct</td><td><span class="who"><span class="av" style="--h:210">JW</span>Jonas Weber</span></td><td>06:40 – 10:05</td><td class="num">3 h 25 m</td><td>Strip-down, rod inspection</td></tr>
+              <tr><td>Fri 30 Oct</td><td><span class="who"><span class="av" style="--h:30">MY</span>Mehmet Yilmaz</span></td><td>07:00 – 08:10</td><td class="num">1 h 10 m</td><td>Lifting the rod, crane</td></tr>
+            </tbody>
+            <tfoot><tr><td colspan="3">Total</td><td class="num">4 h 35 m</td><td class="muted" style="font-weight:400">of 8 h estimated</td></tr></tfoot>
+          </table>
+        </section>
+
+        <section class="card">
+          <header><h2>Comments and activity</h2></header>
+          <div class="composer">
+            <label class="sr" for="cmt">Add a comment</label>
+            <textarea id="cmt" placeholder="Add a comment, @mention a colleague"></textarea>
+            <div class="row">
+              <button class="btn sm" type="button"><svg class="ic"><use href="#i-camera"/></svg>Attach photo</button>
+              <button class="btn sm primary" type="button">Post comment</button>
+            </div>
+          </div>
+          <ul class="feed">
+            <li><span class="av lg" style="--h:210">JW</span><div class="body"><div class="head"><b>Jonas Weber</b><span class="when">31 Oct 2026, 07:12</span></div><p>Waiting on the wiper rings. Everything else is prepped, I continue Monday 06:30 as soon as they arrive.</p></div></li>
+            <li><span class="av lg" style="--h:180">AS</span><div class="body"><div class="head"><b>Anika Schmid</b><span class="when">30 Oct 2026, 09:41</span></div><p>Ordered 2 wiper rings, Hallite delivers Monday morning.</p></div></li>
+            <li><span class="av lg" style="--h:210">JW</span><div class="body"><div class="head"><b>Jonas Weber</b><span class="when">30 Oct 2026, 09:20</span></div><p>Rod surface is fine, no scoring (Ra 0.18 µm). The old seal is hardened and has a nick on the lip. The rod seal kit is in stock, but the bin for the wiper ring is empty.</p>
+              <div class="photos"><div class="photo" role="img" aria-label="Photo of the worn rod seal">IMG_2214.jpg</div><div class="photo" role="img" aria-label="Photo of the piston rod surface">IMG_2216.jpg</div></div></div></li>
+            <li class="sys"><span class="pt"></span><div><b>Jonas Weber</b> changed status from Open to In progress<span class="when">30 Oct 2026, 06:38</span></div></li>
+            <li class="sys"><span class="pt"></span><div><b>Anika Schmid</b> assigned this to Jonas Weber, priority High, due 3 Nov<span class="when">29 Oct 2026, 15:05</span></div></li>
+            <li><span class="av lg" style="--h:0">DH</span><div class="body"><div class="head"><b>Dieter Huber</b> <span class="muted">· Production, Halle 2</span><span class="when">29 Oct 2026, 14:12</span></div><p>Oil puddle under HP-300 after the late shift, about 40 cm across. Strokes got slow on the last 20 parts.</p>
+              <div class="photos"><div class="photo" role="img" aria-label="Photo of the oil puddle under the press">IMG_2201.jpg</div></div></div></li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="aside">
+        <section class="card">
+          <header><h2>Asset</h2></header>
+          <div class="asset-mini">
+            <div class="thumb" aria-hidden="true">Photo</div>
+            <div><a href="#asset"><b>Hydraulic press HP-300</b></a><span class="sub2">Schuler SHP 3000 · SN SH-3000-4471</span><span class="st down" style="margin-top:6px">Down since 30 Oct</span></div>
+          </div>
+        </section>
+        <section class="card">
+          <header><h2>Location</h2></header>
+          <div class="path"><span>Werk Ingolstadt</span><span>Halle 2</span><span>Press line 3</span></div>
+        </section>
+        <section class="card">
+          <header><h2>Meter readings</h2><span class="hint">30 Oct, 06:35</span></header>
+          <div class="meters">
+            <div><b>18,420 h</b><span>Operating hours</span></div>
+            <div><b>4.81 M</b><span>Strokes</span></div>
+            <div><b>52 °C</b><span>Oil temperature</span></div>
+            <div><b>210 bar</b><span>System pressure</span></div>
+          </div>
+        </section>
+        <section class="card">
+          <header><h2>Related work orders</h2></header>
+          <ul class="rel">
+            <li><a href="#">WO-1051</a><span class="st open">Open</span><span class="tt">Inspect hydraulic hoses and fittings</span></li>
+            <li><a href="#">WO-1027</a><span class="st done">Done</span><span class="tt">Hydraulic oil sample for lab analysis</span></li>
+            <li><a href="#">WO-1018</a><span class="st done">Done</span><span class="tt">Quarterly lubrication, press HP-300</span></li>
+          </ul>
+        </section>
+        <section class="card">
+          <header><h2>Details</h2></header>
+          <dl class="kv">
+            <dt>Type</dt><dd>Corrective</dd>
+            <dt>Category</dt><dd>Hydraulics</dd>
+            <dt>Requested by</dt><dd>Dieter Huber</dd>
+            <dt>Created</dt><dd>29 Oct 2026, 14:12</dd>
+            <dt>Cost center</dt><dd>4120 Presswerk</dd>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== ASSET ===================== -->
+  <main id="asset" hidden>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="#">Assets</a><span aria-hidden="true">/</span><span>Halle 2</span><span aria-hidden="true">/</span><span>Press line 3</span><span aria-hidden="true">/</span><span>HP-300</span></nav>
+
+    <div class="asset-head">
+      <div class="thumb" role="img" aria-label="Photo of the press">Photo</div>
+      <div class="page-head">
+        <div>
+          <h1>Hydraulic press HP-300</h1>
+          <p class="sub">Press line 3 · Halle 2 · Werk Ingolstadt</p>
+          <div class="chips"><span class="st down">Down for repair since 30 Oct</span><span class="type">Criticality A</span></div>
+        </div>
+        <div class="actions">
+          <button class="btn" type="button">Report downtime</button>
+          <button class="btn" type="button"><svg class="ic"><use href="#i-print"/></svg>Print QR label</button>
+          <button class="btn primary" type="button"><svg class="ic"><use href="#i-plus"/></svg>New work order</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols wide-aside">
+      <div class="stack">
+        <section class="card">
+          <header><h2>Availability</h2><span class="hint">Weekly, last 12 weeks · target 95 %</span></header>
+          <dl class="kpis">
+            <div><dt>Availability, 30 days</dt><dd class="bad">92.1 %<small>3.6 pts below previous 30 days</small></dd></div>
+            <div><dt>Downtime, 30 days</dt><dd>38 h<small>3 events</small></dd></div>
+            <div><dt>Mean time between failures</dt><dd>296 h<small>last 12 months</small></dd></div>
+            <div><dt>Mean time to repair</dt><dd>5.4 h<small>last 12 months</small></dd></div>
+          </dl>
+          <div class="chart">
+            <div class="plot" role="img" aria-label="Weekly availability from week 33 to week 44, between 83 and 99 percent">
+              <div class="b" style="height:108px"><b>97</b></div>
+              <div class="b" style="height:112px"><b>98</b></div>
+              <div class="b" style="height:104px"><b>96</b></div>
+              <div class="b" style="height:116px"><b>99</b></div>
+              <div class="b" style="height:100px"><b>95</b></div>
+              <div class="b" style="height:108px"><b>97</b></div>
+              <div class="b low" style="height:92px"><b>93</b></div>
+              <div class="b" style="height:112px"><b>98</b></div>
+              <div class="b" style="height:104px"><b>96</b></div>
+              <div class="b low" style="height:84px"><b>91</b></div>
+              <div class="b low" style="height:96px"><b>94</b></div>
+              <div class="b low" style="height:52px"><b>83</b></div>
+              <div class="target"><span>Target 95 %</span></div>
+            </div>
+            <div class="weeks"><span>W33</span><span>W34</span><span>W35</span><span>W36</span><span>W37</span><span>W38</span><span>W39</span><span>W40</span><span>W41</span><span>W42</span><span>W43</span><span>W44</span></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <header><h2>Open work orders</h2><span class="hint">2 open</span></header>
+          <table class="tbl roomy">
+            <caption class="sr">Open work orders for HP-300</caption>
+            <colgroup><col style="width:92px"><col><col style="width:90px"><col style="width:110px"><col style="width:110px"><col style="width:70px"></colgroup>
+            <thead><tr><th>ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Assignee</th><th>Due</th></tr></thead>
+            <tbody>
+              <tr><td><a class="id" href="#work-order">WO-1042</a></td><td><a class="title" href="#work-order">Replace hydraulic seal on press line 3</a></td><td><span class="prio high">High</span></td><td><span class="st progress">In progress</span></td><td><span class="who"><span class="av" style="--h:210">JW</span>Jonas</span></td><td>3 Nov</td></tr>
+              <tr><td><a class="id" href="#">WO-1051</a></td><td><a class="title" href="#">Inspect hydraulic hoses and fittings</a></td><td><span class="prio low">Low</span></td><td><span class="st open">Open</span></td><td><span class="who"><span class="av" style="--h:210">JW</span>Jonas</span></td><td>24 Nov</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <header><h2>Maintenance history</h2><span class="hint">87 entries</span></header>
+          <table class="tbl roomy">
+            <caption class="sr">Maintenance history of HP-300</caption>
+            <colgroup><col style="width:110px"><col style="width:86px"><col style="width:96px"><col><col style="width:90px"><col style="width:84px"></colgroup>
+            <thead><tr><th>Date</th><th>WO</th><th>Type</th><th>Work done</th><th>Technician</th><th class="num">Downtime</th></tr></thead>
+            <tbody>
+              <tr><td>22 Oct 2026</td><td><a href="#">WO-1027</a></td><td>Inspection</td><td>Hydraulic oil sample for lab analysis</td><td>Jonas</td><td class="num">0 h</td></tr>
+              <tr><td>15 Oct 2026</td><td><a href="#">WO-1018</a></td><td>Preventive</td><td>Quarterly lubrication</td><td>Jonas</td><td class="num">1.5 h</td></tr>
+              <tr><td>24 Sep 2026</td><td><a href="#">WO-0987</a></td><td>Corrective</td><td>Replace pressure transducer, main circuit</td><td>Mehmet</td><td class="num">3.5 h</td></tr>
+              <tr><td>9 Sep 2026</td><td><a href="#">WO-0961</a></td><td>Preventive</td><td>Replace hydraulic return filter element</td><td>Jonas</td><td class="num">2 h</td></tr>
+              <tr><td>14 Jul 2026</td><td><a href="#">WO-0902</a></td><td>Corrective</td><td>Replace proportional valve coil</td><td>Stefan</td><td class="num">4 h</td></tr>
+              <tr><td>23 Jun 2026</td><td><a href="#">WO-0880</a></td><td>Preventive</td><td>Annual safety check, E-stops</td><td>Tobias</td><td class="num">3 h</td></tr>
+            </tbody>
+          </table>
+          <div class="ft"><a href="#">View full history</a></div>
+        </section>
+      </div>
+
+      <div class="aside">
+        <section class="card">
+          <header><h2>Key facts</h2></header>
+          <dl class="kv">
+            <dt>Asset ID</dt><dd>HP-300</dd>
+            <dt>Category</dt><dd>Hydraulic press</dd>
+            <dt>Manufacturer</dt><dd>Schuler</dd>
+            <dt>Model</dt><dd>SHP 3000, 3,000 kN</dd>
+            <dt>Serial number</dt><dd>SH-3000-4471</dd>
+            <dt>Installed</dt><dd>March 2016</dd>
+            <dt>Location</dt><dd>Halle 2, Press line 3</dd>
+            <dt>Criticality</dt><dd>A, production critical</dd>
+            <dt>Cost center</dt><dd>4120 Presswerk</dd>
+            <dt>Operating hours</dt><dd>18,420 h</dd>
+            <dt>Warranty</dt><dd>Expired March 2019</dd>
+            <dt>Technician</dt><dd><span class="who"><span class="av" style="--h:210">JW</span>Jonas Weber</span></dd>
+            <dt>Service partner</dt><dd>Schuler Service, Göppingen</dd>
+          </dl>
+        </section>
+        <section class="card">
+          <header><h2>Documents</h2><button class="btn sm" type="button">Upload</button></header>
+          <ul class="docs">
+            <li><span class="ext">PDF</span><div><a href="#">Operating manual SHP 3000 (DE)</a><small>12.4 MB · March 2016</small></div></li>
+            <li><span class="ext">PDF</span><div><a href="#">Hydraulic circuit diagram, rev. D</a><small>3.1 MB · 14 Feb 2024</small></div></li>
+            <li><span class="ext">PDF</span><div><a href="#">Lockout/tagout procedure, press line 3</a><small>0.4 MB · 2 Sep 2025</small></div></li>
+            <li><span class="ext">XLS</span><div><a href="#">Lubrication and inspection plan</a><small>86 KB · 8 Jan 2026</small></div></li>
+            <li><span class="ext">PDF</span><div><a href="#">Spare parts list</a><small>2.2 MB · March 2016</small></div></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+  </div>
+</div>
+
+<script>
+// Screen switching by URL hash
+var titles = {'work-orders':'Work orders','work-order':'WO-1042','asset':'Hydraulic press HP-300'};
+function route(){
+  var id = titles[location.hash.slice(1)] ? location.hash.slice(1) : 'work-orders';
+  document.querySelectorAll('main').forEach(function(m){ m.hidden = m.id !== id; });
+  document.querySelectorAll('[data-nav]').forEach(function(a){
+    if (a.dataset.nav.split(' ').indexOf(id) > -1) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+  });
+  document.title = 'Maintra · ' + titles[id];
+  window.scrollTo(0,0);
+}
+addEventListener('hashchange', route);
+route();
+document.querySelectorAll('a[href="#"]').forEach(function(a){ a.addEventListener('click', function(e){ e.preventDefault(); }); });
+
+// Work order list: search and filters
+var rows = [].slice.call(document.querySelectorAll('#wo-body tr[data-asset]'));
+var fields = ['status','priority','assignee','asset'];
+function filter(){
+  var t = document.getElementById('q').value.trim().toLowerCase(), n = 0;
+  rows.forEach(function(r){
+    var ok = (!t || r.textContent.toLowerCase().indexOf(t) > -1) && fields.every(function(k){
+      var v = document.getElementById('f-' + k).value; return !v || r.dataset[k] === v;
+    });
+    r.hidden = !ok; if (ok) n++;
+  });
+  document.getElementById('wo-empty').hidden = n > 0;
+  document.getElementById('wo-count').textContent = n === rows.length ? 'Showing 1–20 of 148' : n + ' of 20 loaded work orders match';
+}
+document.getElementById('q').addEventListener('input', filter);
+fields.forEach(function(k){ document.getElementById('f-' + k).addEventListener('change', filter); });
+
+// Checklist progress
+var steps = [].slice.call(document.querySelectorAll('.steps input'));
+steps.forEach(function(s){ s.addEventListener('change', function(){
+  var n = steps.filter(function(x){ return x.checked; }).length;
+  document.getElementById('steps-count').textContent = n + ' of ' + steps.length + ' steps';
+  document.getElementById('steps-bar').style.width = (n / steps.length * 100) + '%';
+}); });
+</script>
+</body>
+</html>

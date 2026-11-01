@@ -1,0 +1,14 @@
+<!doctype html>
+<!-- Row fixture: four cards side by side; the third title wraps to two lines, so its number and
+     meta line sit 20px below the others. Each text style should sit on one line across the row. -->
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0} body{font:14px/20px system-ui,sans-serif;color:#1d1d1b;background:#fafaf8}
+main{max-width:960px;margin:32px auto} .row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:#fff;border:1px solid #e6e4df;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.card h3{font-size:15px;line-height:20px;font-weight:600} .card .n{font-size:24px;line-height:28px;font-weight:600} .card .m{font-size:12px;line-height:16px;color:#5d5a54}
+</style></head><body><main><div class="row">
+<div class="card"><h3>Open risks</h3><div class="n">12</div><div class="m">3 new this week</div></div>
+<div class="card"><h3>Overdue actions</h3><div class="n">5</div><div class="m">2 past 14 days</div></div>
+<div class="card"><h3>Decisions waiting for steering committee</h3><div class="n">4</div><div class="m">oldest 9 days</div></div>
+<div class="card"><h3>Milestones</h3><div class="n">8</div><div class="m">1 at risk</div></div>
+</div></main></body></html>
