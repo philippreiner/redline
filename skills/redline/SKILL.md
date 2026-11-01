@@ -1,6 +1,6 @@
 ---
 name: redline
-description: Design, review, or polish anything a user sees: a new screen or flow, where information lives (pages, tabs, lists, navigation), a wireframe, click dummy, or set of variants, a consistency pass, a UI diff, and small tweaks to a menu, chip, row, spacing, alignment, or width.
+description: "Design, review, or polish anything a user sees: a new screen or flow, where information lives (pages, tabs, lists, navigation), a wireframe, click dummy, or set of variants, a consistency pass, a UI diff, and small tweaks to a menu, chip, row, spacing, alignment, or width."
 ---
 
 # Design
