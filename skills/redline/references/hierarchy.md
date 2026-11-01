@@ -1,4 +1,4 @@
-# 4 Hierarchy and proximity
+# 5 Hierarchy and proximity
 
 ## Rank by level
 
@@ -10,8 +10,8 @@
 
 - Quiet the neighbors before making the lead louder; add size or color last.
 - A setup card the screen needs before it can work may lead until it is done.
-- `text.js` `loudest`: the top entry is the thing the user came for.
-- `views.js` `notext`: with the text erased, the structure still shows what leads and what groups.
+- `view.js` `lead`: in the blur, leader A is the thing the user came for, and decoration (dashed) leads nothing.
+- `view.js` `notext`: with the text erased, the structure still shows what leads and what groups.
 
 ## Groups
 
@@ -25,7 +25,7 @@
 - A follow-up sits right under the choice that opens it.
 - A choice that decides which fields apply comes before those fields.
 - The next step is where the eye lands after the last one. Trace the eye through the main task: it moves down and on, never back up or across the screen.
-- A repeated action becomes the row's own click. In-row actions stay quiet; hover fills the row and adds no new control.
+- The row's own click opens it. An action people take on many rows (record, assign, mute) stays on the row, quiet, where they used it before; rare actions go in the row's menu.
 
 ## Show by level
 
@@ -37,14 +37,14 @@
 ## Move down, cut
 
 - Rank content by how often the user needs it. Rare settings, developer tools, and metadata move into a menu, a detail view, or the end.
-- Cut a section that only says there is nothing ("No files yet", "Nothing needs you"). Keep one setup card where the screen needs a connection first, and one empty state where the screen's main content is empty. `text.js` `nothing` lists the candidates.
-- Cut a second way to do the same thing on one screen: a header button, a dashed tile, and a banner that all add. `text.js` `actions` lists every action label.
+- Cut a section that only says there is nothing ("No files yet", "Nothing needs you"). Keep one setup card where the screen needs a connection first, and one empty state where the screen's main content is empty. `count.js` `text.nothing` lists the candidates.
+- Cut a second way to do the same thing on one screen: a header button, a dashed tile, and a banner that all add.
 - Cut decoration that carries no meaning.
 
 ## Numbers
 
 | Number | Target |
 | --- | --- |
-| `text.js` `loudest`, first entry | The thing the user came for |
-| `text.js` `counts.nothing` | 0, besides one empty state or setup card |
-| `text.js` `counts.actions` | Fewer than before; no two labels for one action |
+| `view.js` `lead`, leader A | The thing the user came for |
+| `count.js` `text.nothing` | Empty, besides one empty state or setup card |
+| `count.js` `text.repeats` | No label repeated down a list where one action would do |

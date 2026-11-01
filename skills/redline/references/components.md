@@ -1,4 +1,4 @@
-# 2 Components and objects
+# 3 Components and objects
 
 One part per job, composed from primitives, used as it is, everywhere.
 
@@ -9,7 +9,7 @@ One part per job, composed from primitives, used as it is, everywhere.
 - Use a part as it is: pass content and layout, and leave its look to the library.
 - Same job, same part across the product. Two pickers, two empty states, or two section headers for one job are drift: fold them into one.
 - In a diff, look for hand-built twins: a heading, picker, box, row, or empty state the library already has. Search the code for a repeated class string: two hits for one concept mean a missing part.
-- `inventory.js` `buttons` and `controls`: one row per variant. Two variants that differ by one value are one variant built twice.
+- `count.js` `buttons` and `controls`: one row per variant. Two variants that differ by one value are one variant built twice.
 
 ## Composable parts
 
@@ -45,7 +45,7 @@ Parts in one region (a toolbar, a form row, a card's foot) look like one set:
 - One style per role: every secondary button in the region looks the same.
 - One height for controls side by side; their text and icons share the center line.
 - One radius and one line weight across the region; gaps from one step of the spacing scale.
-- `heatmap.js` paints each kind of element in its own color, outlines in red a member a few pixels or a shade off its kind, and boxes a row of controls with mixed heights or two filled buttons.
+- `count.js` `control` finds controls side by side whose heights differ by 1 to 4px, and `sibling` the one part of a set styled unlike the rest.
 
 ## Inner balance
 
@@ -59,6 +59,5 @@ Parts in one region (a toolbar, a form row, a card's foot) look like one set:
 
 | Number | Target |
 | --- | --- |
-| `heatmap.js` `counts.nearMisses` | 0 |
-| `heatmap.js` `counts.mixedRows` | 0 |
-| `inventory.js` `distinct.buttons`, `distinct.controls` | The library's variants, no more |
+| `count.js` `control` and `sibling` checks at 0.5 or more | None |
+| `count.js` `distinct.buttons`, `distinct.controls` | The library's variants, no more |

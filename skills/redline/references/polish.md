@@ -1,4 +1,4 @@
-# 8 Polish
+# 9 Polish
 
 Spot checks, once, after every lens holds. Each is a question; a "no" is a finding to fix or to name as open.
 
@@ -10,7 +10,7 @@ Spot checks, once, after every lens holds. Each is a question; a "no" is a findi
 
 ## Variance
 
-- Does `inventory.js` show every list under its cap, and no one-off that the change added?
+- Does `count.js` show every list under its cap, and no one-off that the change added? Does `measure.sh` print no minimum check, and do its images show nothing the checks missed?
 - Does each remaining difference mean something?
 - For a size or gap you doubt, try one step up and one step down the scale, and keep the one that looks right.
 
@@ -33,6 +33,6 @@ Spot checks, once, after every lens holds. Each is a question; a "no" is a findi
 
 ## The best we can do
 
-- Squint: does one thing lead? Far view: can you name the page, and does it look like this product? Text only: does it make sense?
+- Squint (`view.js` `lead`): does one thing lead, can you name the page, and does it look like this product? Text only: does it make sense?
 - Can a newcomer explain the screen in one sentence?
 - Would a top designer ship it? What would make it memorable without adding noise?

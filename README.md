@@ -1,16 +1,16 @@
 # redline
 
-A design skill for coding agents. It makes the agent the designer of a product's interface, interaction, and journey, and gives it lenses, numbers, and browser scripts to check its own work: alignment overlays, a heatmap of parts that should match, stress tests for long text and long lists, and a text-only read of the screen.
+A design skill for coding agents. It makes the agent the designer of a product's interface, information architecture, and journey: it starts from the known pattern for the job, settles structure and layout before parts and detail, explores directions that differ in kind, and checks its own work with three browser scripts.
 
 ## What it sees
 
-The layout meter draws every left edge in magenta, every box edge in dashed blue, and marks near-misses in red. The same Sources screen before and after a pass with the skill:
+`redline.js` runs a guide line wherever three or more things in one column share an edge, boxes whatever sits 1 to 3px (red) or 4 to 8px (orange) off one, and numbers the checks worth fixing, each with the CSS edit. The same Sources screen before and after a pass with the skill:
 
-| Before: 20 left edges, 1 near-miss, 6 boxes | After: 10 left edges, no near-miss, 5 boxes |
+| Before | After |
 | --- | --- |
-| ![Layout meter on the screen before](docs/before.png) | ![Layout meter on the screen after](docs/after.png) |
+| ![Redline overlay on the screen before](docs/before.png) | ![Redline overlay on the screen after](docs/after.png) |
 
-Fewer lines look calmer: the title, search, list, and tiles now start on one edge, and the dates sit in their own column.
+Fewer lines look calmer: the card contents now start on one edge.
 
 ## Install
 
@@ -18,27 +18,32 @@ Fewer lines look calmer: the title, search, list, and tiles now start on one edg
 npx skills add philippreiner/redline
 ```
 
+Update an installed copy with `npx skills update`.
+
 ## What's inside
 
 | Path | Holds |
 | --- | --- |
-| `skills/redline/SKILL.md` | Role, principles, levels, modes (explore, consistency pass, new feature, rework, review), the lens process, the critic loop, and the lens table every answer ends with |
-| `references/` | Eight lenses (foundations, components, layout, hierarchy, detail, alignment, words, polish), a pattern library, and click dummies |
-| `scripts/` | Browser scripts that measure a page; `measure.sh` runs them all and compares before with after |
-| `bench/` | Three screens with known defects, to check the skill after a change |
+| `skills/redline/SKILL.md` | Role, principles, how to start, Quick and Full work, the two gates (structure and layout, then parts), modes (explore, consistency pass, new feature, rework, review), lenses, and the critic |
+| `skills/redline/references/` | Nine lenses (structure, foundations, components, layout, hierarchy, detail, alignment, words, polish), a pattern library, and click dummies, wireframes, and configurators |
+| `skills/redline/scripts/` | `redline.js` (shared left and right edges, near-misses, baselines, and card insets; live in click dummies), `count.js` (siblings, table cells, and controls that break with their group, contrast, and the style inventory, with a panel), `view.js` (bands for rhythm, empty space, collisions, and cut or wrapped text; lead, grid, wireframe, text only, no text, and the long and many stress tests), and `measure.sh` (one ranked list of minimum checks, a fix trial, and before-and-after numbers) |
+| `bench/` | Screens with known defects, one fixed screen, and the fix cases for `measure.sh --try`, to check the scripts after a change; not installed with the skill |
 
 ## Use
 
-Ask your agent to design, review, or polish a screen; the skill picks up UI work. The scripts run in any browser. `measure.sh` needs [agent-browser](https://www.npmjs.com/package/agent-browser) and node; from the installed skill folder:
+Ask your agent to design, review, or polish a screen; the skill picks up UI work, small tweaks included. The scripts run in any browser. `measure.sh` needs [agent-browser](https://www.npmjs.com/package/agent-browser) and node, and measures the page already open in the agent's browser session, signed in:
 
 ```sh
-scripts/measure.sh http://localhost:3000/settings before main
+scripts/measure.sh before main      # the minimum checks, then look at the images
+scripts/measure.sh --try before 1   # try check 1's edit on the page first
 # change the screen
-scripts/measure.sh http://localhost:3000/settings after main
+scripts/measure.sh after main
 scripts/measure.sh --compare before after
 ```
 
-A project's own design rules, such as a `DESIGN.md` and its component library, take precedence over the skill.
+In a click dummy, `<script src=".../redline.js"></script>` with live mode keeps the overlay on; Alt+R toggles it.
+
+A project's own design rules, such as a `DESIGN.md`, are the defaults; the skill asks what a world-class expert would do and names any rule it bends.
 
 ## License
 

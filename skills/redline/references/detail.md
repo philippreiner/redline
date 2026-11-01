@@ -1,4 +1,4 @@
-# 5 Detail
+# 6 Detail
 
 Break each part with worst-case data before polishing it, then design every state and every response.
 
@@ -7,10 +7,10 @@ Break each part with worst-case data before polishing it, then design every stat
 - Try the shortest, the typical, and the longest real value, and the longest translation (German and Finnish run 30 to 40% longer than English).
 - Titles wrap to two lines, then clamp. A key value (an address, an amount, an ID, a name in a chip) is never cut: it wraps or opens.
 - Where text must truncate, the full value stays reachable: a tooltip, an expansion, the detail view.
-- `text.js` `truncated` lists text cut by an ellipsis or a line clamp; each entry is cut on purpose or a defect.
-- `stress.js` `long` grows every text by 80% and small counts to thousands, in place; `many` repeats each list's rows up to 50. Run both on each changed screen and compare what breaks before and after.
+- `count.js` `text.truncated` lists text cut by an ellipsis or a line clamp; each entry is cut on purpose or a defect.
+- `view.js` `long` grows every text by 80% and plain counts to thousands, in place; `many` repeats the first visible list's rows up to 50. Run both on each changed screen; `broke` lists what newly clips or overlaps, and where.
 - Numbers in columns: tabular figures, right-aligned, one unit and precision down the column.
-- One date format across the product, the year only when it differs. `text.js` `valueFormats` shows each shape; two date shapes in one list are a defect.
+- One date format across the product, the year only when it differs. `count.js` `text.valueFormats` shows each shape; two date shapes in one list are a defect.
 
 ## Density
 
@@ -63,9 +63,9 @@ Break each part with worst-case data before polishing it, then design every stat
 
 ## Access
 
-- Every control has an accessible name; an icon-only button gets a label. `inventory.js` `unnamed` lists the ones without.
+- Every control has an accessible name; an icon-only button gets a label. `count.js` `unnamed` lists the ones without.
 - The keyboard reaches everything the pointer does, in reading order, and focus is always visible.
-- Hit targets are at least 24px, 44px on touch. `inventory.js` `smallTargets` lists the candidates.
+- Hit targets are at least 24px, 44px on touch. `count.js` `smallTargets` lists the candidates.
 - Nothing clips at the narrowest supported width or at 200% zoom.
 - Meaning rides on more than color or motion.
 
@@ -73,7 +73,7 @@ Break each part with worst-case data before polishing it, then design every stat
 
 | Number | Target |
 | --- | --- |
-| `stress.js` `after.clipped`, `after.overlaps`, under `long` and `many` | 0 |
-| `stress.js` `after.truncated`, `text.js` `counts.truncated` | Only text cut on purpose, with the full value reachable |
-| `text.js` `valueFormats` | One shape per kind of value |
-| `inventory.js` `unnamedCount`, `smallTargetCount` | 0 |
+| `view.js` `broke`, under `long` and `many` | Empty |
+| `count.js` `text.truncated` | Only text cut on purpose, with the full value reachable |
+| `count.js` `text.valueFormats` | One shape per kind of value |
+| `count.js` `unnamed`, `smallTargets` | Empty |

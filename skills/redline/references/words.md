@@ -1,4 +1,4 @@
-# 7 Words
+# 8 Words
 
 The best label is the one the screen does without; the next best is short, plain, and names what happens. A project's copy guide applies first; this file fills the gaps.
 
@@ -43,12 +43,12 @@ The best label is the one the screen does without; the next best is short, plain
 
 ## Read as text
 
-Run `text.js` and read `lines` top to bottom without the screen.
+Read the text top to bottom without the layout (`view.js` `textonly`).
 
 - It makes sense as a page: what this is, what it holds, what to do next.
-- Each `repeats` entry is a candidate to say once; a column of one button label is a candidate for the row's own click.
-- Each `eyebrows` and `restated` entry is a candidate to cut.
-- Each `nothing` entry is a section to remove or an empty state to merge.
+- Each `count.js` `text.repeats` entry is a candidate to say once; a column of one button label is a candidate for the row's own click.
+- An eyebrow over a title, or a line that restates its heading, is a candidate to cut.
+- Each `text.nothing` entry is a section to remove or an empty state to merge.
 - `words` goes down with each pass.
 
 ## Examples
@@ -73,6 +73,5 @@ Run `text.js` and read `lines` top to bottom without the screen.
 
 | Number | Target |
 | --- | --- |
-| `text.js` `counts.words` | Fewer after each pass |
-| `text.js` `counts.helpers` | Fewer than before; each one says what happens for the user |
-| `text.js` `counts.repeats`, `counts.eyebrows`, `counts.restated` | 0, or each one kept on purpose |
+| `count.js` `words` | Fewer after each pass |
+| `count.js` `text.repeats` | Empty, or each one kept on purpose |
