@@ -18,6 +18,8 @@ const screens = {
   "cmms-asset": ["cmms.html#asset", "main"],
   scope: ["scope.html", "main"],
   row: ["row.html", "main"],
+  seeded: ["seeded.html", "main"],
+  "cmms-cut": ["cmms-cut.html#asset", "main"],
 };
 
 // [screen, check kind ("note": the first check under 0.5 with an apply), its text starts
@@ -102,6 +104,19 @@ const cases = [
     "FAIL",
     "the search placeholder disappears",
   ],
+  ["seeded", "sibling", "+3.2", null, "CLEAN", "printed: the odd tile value at its row-mates' size"],
+  ["seeded", "contrast", "Week 44", null, "CLEAN", "printed: a darker gray on the subtitle"],
+  ["seeded", "edge", "480 k", null, "CLEAN", "printed: the number column's right padding"],
+  ["seeded", "inset", "Overdue", null, "CLEAN", "printed: the odd tile's left padding"],
+  ["seeded", "edge", "Follow-ups", null, "CLEAN", "printed: the heading's margin"],
+  ["seeded", "control", "Send review", null, "CLEAN", "printed: the taller button's height"],
+  ["seeded", "sibling", "Blocked", null, "NOAPPLY", "a chip needs markup"],
+  ["seeded", "sibling", "Nov 21", null, "NOAPPLY", "a date format is a text change"],
+  ["seeded", "inset", "Overdue", "div.tiles > dl.b { padding-left: 16px; width: fit-content }", "FAIL", "right inset, but the tile loses its shared width"],
+  ["seeded", "control", "Send review", "div.actions > button.primary { height: 32px; font-size: 12px }", "FAIL", "right height, smaller label"],
+  ["cmms-cut", "break", "24 Sep", null, "CLEAN", "printed: the date column 4px wider"],
+  ["cmms-cut", "break", "24 Sep", "section.card:nth-child(3) > table.roomy tbody tr:nth-child(3) td:first-child { font-size: 12px }", "FAIL", "shrinks the date to fit"],
+  ["cmms-cut", "break", "24 Sep", "section.card:nth-child(3) > table.roomy tbody tr:nth-child(3) td:first-child { letter-spacing: -0.4px }", "FAIL", "tightens the date to fit"],
 ];
 
 const session = process.env.AGENT_BROWSER_SESSION || "check-cases";

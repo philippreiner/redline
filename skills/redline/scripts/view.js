@@ -1259,6 +1259,13 @@
         let piece = edge.n;
         while (piece.parentElement !== el) piece = piece.parentElement;
         const fixed = getComputedStyle(piece).width;
+        // A box flush with its column on the empty side keeps that edge: center its content instead.
+        const p = el.parentElement.getBoundingClientRect(),
+          ps = getComputedStyle(el.parentElement),
+          flush =
+            side === "right"
+              ? Math.abs(p.right - parseFloat(ps.paddingRight) - parseFloat(ps.borderRightWidth) - r.right) <= 1
+              : Math.abs(p.left + parseFloat(ps.paddingLeft) + parseFloat(ps.borderLeftWidth) - r.left) <= 1;
         zones.push({ el });
         checks.push({
           kind: "dead-zone",
@@ -1266,8 +1273,10 @@
           text: label(el),
           against: `${Math.round(small)}px on the ${side === "right" ? "left" : "right"}`,
           off: Math.round(big - small),
-          fix: `Set width to fit-content on ${sel(el)}, or set margin-inline to auto on ${sel(piece)} (${fixed} wide); it leaves ${Math.round(big)}px empty on the ${side}.`,
-          edits: edit(el, "width", "fit-content"),
+          fix: flush
+            ? `Set margin-inline to auto on ${sel(piece)} (${fixed} wide), so ${sel(el)} keeps its edge on the column; it leaves ${Math.round(big)}px empty on the ${side}.`
+            : `Set width to fit-content on ${sel(el)}, or set margin-inline to auto on ${sel(piece)} (${fixed} wide); it leaves ${Math.round(big)}px empty on the ${side}.`,
+          edits: flush ? edit(piece, "margin-inline", "auto") : edit(el, "width", "fit-content"),
           count: 1,
           score: 0.6 + Math.min(0.3, big / 1000),
           zone: {

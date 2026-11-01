@@ -253,19 +253,25 @@ JS
       if (a === b || a.startsWith(b + "/") || b.startsWith(a + "/")) continue;
       if (Math.min(r1, r2) - Math.max(l1, l2) > 1 && Math.min(b1, lines[j][4]) - t2 > 1) over.add([a, b].sort().join(" "));
     }
-  const sizes = holders.map((h) => { const r = h.getBoundingClientRect(); return [r.width, r.height]; });
-  // What each holder shares with its siblings (an outer edge, its width or height) and with its
-  // parent's content box (flush on a side), within 1px.
-  const shared = holders.map((h) => {
+  // The holders, then their containers up to the region.
+  const frame = [...holders];
+  for (const h of holders) for (let a = h.parentElement; a && a !== layer.parentElement; a = a.parentElement) if (!frame.includes(a)) frame.push(a);
+  const sizes = frame.map((h) => { const r = h.getBoundingClientRect(); return [r.width, r.height]; });
+  // What each shares with its siblings (an outer edge, its width or height) and, when it holds
+  // elements, with its parent's content box (flush on a side), within 1px. Containers keep only
+  // the lines across (a fix may make them taller); a text-only holder may hug its text (a halo
+  // behind a chart label).
+  const shared = frame.map((h, i) => {
     const r = h.getBoundingClientRect(), p = h.parentElement, sibs = [...(p?.children || [])].filter((s) => s !== h && s.getClientRects().length).map((s) => s.getBoundingClientRect());
     const pr = p?.getBoundingClientRect(), ps = p && getComputedStyle(p), inner = (e) => pr[e] + (e === "left" || e === "top" ? 1 : -1) * (parseFloat(ps[`padding${e[0].toUpperCase()}${e.slice(1)}`]) + parseFloat(ps[`border${e[0].toUpperCase()}${e.slice(1)}Width`]));
+    const own = i < holders.length;
     return [
-      ...["left", "right", "top", "bottom"].filter((e) => sibs.some((q) => Math.abs(q[e] - r[e]) <= 1)).map((e) => `${e} edge with a sibling`),
-      ...["width", "height"].filter((d) => sibs.some((q) => Math.abs(q[d] - r[d]) <= 1)).map((d) => `${d} with its siblings`),
-      ...(pr ? ["left", "right"].filter((e) => Math.abs(inner(e) - r[e]) <= 1).map((e) => `${e} edge flush with its parent`) : []),
+      ...(own ? ["left", "right", "top", "bottom"] : ["left", "right"]).filter((e) => sibs.some((q) => Math.abs(q[e] - r[e]) <= 1)).map((e) => `${e} edge with a sibling`),
+      ...(own ? ["width", "height"] : ["width"]).filter((d) => sibs.some((q) => Math.abs(q[d] - r[d]) <= 1)).map((d) => `${d} with its siblings`),
+      ...(pr && h.children.length ? ["left", "right"].filter((e) => Math.abs(inner(e) - r[e]) <= 1).map((e) => `${e} edge flush with its parent`) : []),
     ];
   });
-  return JSON.stringify({ boxes, text, over: [...over], sizes, shared, names: holders.map(name) });
+  return JSON.stringify({ boxes, text, over: [...over], sizes, shared, names: frame.map(name), held: holders.length });
 })()
 JS
   snapshot() { agent-browser eval "$layer $snap" >"$out/$1.boxes"; }
@@ -304,7 +310,7 @@ const whole = (t) => t && t[0] > 0 && t[1] >= t[0] * 0.99;
 // One width: A before, B after, S a second look before (what differs from A moves on its own).
 const judge = (A, B, S, styles, at) => {
   // What the holders' change in size pushes along.
-  const limit = Math.round(Math.max(0, ...A.sizes.flatMap((s, i) => s.map((v, j) => Math.abs(B.sizes[i][j] - v))))) + 2;
+  const limit = Math.round(Math.max(0, ...A.sizes.slice(0, A.held).flatMap((s, i) => s.map((v, j) => Math.abs(B.sizes[i][j] - v))))) + 2;
   const steady = (p) => !S || (S.boxes[p] && A.boxes[p].slice(0, 4).every((v, i) => Math.abs(v - S.boxes[p][i]) <= 1));
   const calm = (p) => !S || JSON.stringify(S.text[p]) === JSON.stringify(A.text[p]);
   const moved = Object.entries(A.boxes).flatMap(([p, [x, y, w, h, held, holds, name, toBottom, toRight, pinB, pinR]]) => {
@@ -324,9 +330,13 @@ const judge = (A, B, S, styles, at) => {
   const label = (p) => `"${(B.text[p] || A.text[p] || [, , p])[2]}"`;
   const was = new Set([...A.over, ...(S ? S.over : [])]);
   const runs = B.over.filter((pair) => !was.has(pair)).map((pair) => pair.split(" ").map(label).join(" over "));
-  const lost = A.shared.flatMap((edges, i) => edges.filter((e) => !B.shared[i].includes(e)).map((e) => `${A.names[i]} ${e}`));
+  // A flush edge is lost only when the holder's width changed: a box that shrinks off its column,
+  // not one the fix moves whole (centered).
+  const lost = A.shared.flatMap((edges, i) =>
+    edges.filter((e) => !B.shared[i].includes(e) && (!/flush/.test(e) || Math.abs(A.sizes[i][0] - B.sizes[i][0]) > 1)).map((e) => `${A.names[i]} ${e}`),
+  );
   return [
-    ...list(lost, "lost by the fix's own elements"),
+    ...list(lost, "lost by the fix's elements or their containers"),
     ...list(styles, "style changes outside what the fix may change"),
     ...(moved.length ? [`${moved.length} boxes outside the fix moved (limit ${limit}px): ${moved.slice(0, 4).join(", ")}${moved.length > 4 ? ", …" : ""}`] : []),
     ...list(cut, "texts cut"),

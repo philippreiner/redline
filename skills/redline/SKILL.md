@@ -14,7 +14,7 @@ Work the way a world-class expert in this product's domain and in interaction an
 The rubric for every lens and for the critic.
 
 1. **One thing leads.** The answer to the question the user came with wins the squint test. Quiet the neighbors before adding emphasis.
-2. **Less.** Every element answers a question the user has on this screen, or it goes. One way to do each thing. A screen with less on it looks more finished.
+2. **Less.** Every element answers a question the user has on this screen, or it goes. One way to do each thing. Cut taglines, helper text, and secondary labels: a screen that needs them to make sense needs a better layout, not more words. A screen with less on it looks more finished.
 3. **Few variants.** One size, color, radius, line, and gap per role, used everywhere. A difference is deliberate and rare: it sets a region apart or marks the one thing that leads; otherwise it goes.
 4. **Space groups.** Proximity first, then tone, then a line, then a box: the weakest means that holds the group. A divider between every row and a border around every block are the tells of skipping the first two.
 5. **Line up.** Every edge sits on an edge already there, across and down, and every size and gap on the 4px grid.
