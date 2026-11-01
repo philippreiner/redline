@@ -39,12 +39,13 @@ Every extra size, weight, color, radius, line, or gap is one more thing the eye 
 - Each color and each mark means one thing everywhere: a check means done in every list.
 - One accent for actions; status colors from one ramp.
 - Every color meaning also shows as a word, an icon, or a shape.
+- Charts: the chart type follows the data (a trend is a line, a comparison bars, a share one stacked bar, a goal a progress bar); one accent on what matters and neutral steps for the rest; a value axis starts at zero or says where it starts.
 
 ## Lines, shapes, and icons
 
 - Lines, icon strokes, and text stems look like one weight: a hairline border, icons whose stroke renders near the stem of the body text. A heavy icon beside light text, or a 2px border among 1px ones, looks like another product.
 - Icon sizes follow text sizes: about 16 beside 13 to 14px text, 20 beside 16 to 18px. `count.js` `icons` lists each size with its rendered stroke.
-- Radii nest: an inner radius is the outer radius minus the padding between them, or square.
+- Radii nest: an inner radius is the outer radius minus the padding between them, never below 4, or square. An inner box as round as its outer one looks pinched at the corners. `count.js` `nestedRadius` lists the pairs that break it.
 - One button shape: one radius and one padding rule; height by context.
 
 ## Contrast
@@ -69,3 +70,7 @@ From `count.js` on each changed screen.
 | `oneOffs` per list | 0, or each one named with its reason |
 | `distinct` per list | At or under its cap in [Few variants](#few-variants) |
 | `contrast` checks | None |
+
+## Consistency pass
+
+For a code base whose screens have drifted apart. Start at the tokens: lay out every value `count.js` finds on the main screens on one page, with counts. Fold each raw value and one-off into its nearest token, and name the survivors as tokens and variants. Then parts on the reduced tokens, then layouts on the reduced parts, one level at a time across the product. Move every rule a linter can check into the linter. Done when the distinct counts fall and `offTokenValues` and the one-offs reach zero.

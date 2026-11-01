@@ -44,6 +44,7 @@ Break each part with worst-case data before polishing it, then design every stat
 - A loader appears only after about 300ms, as the skeleton; a spinner that flashes looks broken.
 - A refresh keeps the old content in place and updates only the part that changed.
 - Tiny animations explain a change: something opens, moves, arrives, or leaves. 100 to 300ms, ease-out, none on first render, reduced motion respected. The user can act during any animation.
+- One easing curve and two or three durations across the product. Animate color, opacity, and transform, never size or position. At most one entrance when a screen loads. Nothing loops unless it is live.
 
 ## Feedback and errors
 

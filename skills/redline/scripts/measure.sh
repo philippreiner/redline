@@ -2,20 +2,21 @@
 # Measure a page or one region; save the numbers and images; print the minimum checks.
 #   measure.sh [--all] [--url <url-or-file>] <out-dir> [region-selector]
 #   measure.sh --try <out-dir> <n> [fix.css]     tries check n's fix (or your own CSS) on the page
-#   measure.sh --compare <before-dir> <after-dir>    prints every number that changed
+#   measure.sh --compare <before-dir> <after-dir>    prints what moved: checks, distinct values, misses
 # Without --url (or with --url -) it measures the page already open in agent-browser's
-# session: AGENT_BROWSER_SESSION, else its default session. It closes a session only
-# when it opened it. Default run: page.png, then redline, count, and view-bands as png
+# session: AGENT_BROWSER_SESSION, else its default session; a page it opens stays open
+# for --try. Default run: page.png, then redline, count, and view-bands as png
 # and json, and min-checks.json: every check in one ranked list. The checks are the floor
 # of a review; the images are the review. --all adds the views lead, grid, wireframe,
 # notext, and textonly and the stress views long and many. --try applies the check's
-# `apply` (or fix.css) and prints PASS when the check is gone and the fix changed only its
-# own elements, at WIDTH and WIDTH - 160; NOTE for a check under 0.5; FAIL with the reason.
-# It stops the page's timers, so reload the page after. Window: WIDTH x HEIGHT (1440x900).
+# `apply` (or fix.css) on the page the checks came from and prints CLEAN when the check is
+# gone and nothing else measured changed, at WIDTH and WIDTH - 160 (no proof the fix is
+# good: look at it); NOTE for a check under 0.5; FAIL with the reason. It stops the page's
+# timers, so reload the page after. Window: WIDTH x HEIGHT (1440x900).
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 usage() {
-  sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//' >&2
+  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//' >&2
   exit 1
 }
 
@@ -26,29 +27,26 @@ const fs = require("node:fs");
 const path = require("node:path");
 const [a, b] = process.argv.slice(2);
 // A result file holds plain JSON or the JSON string agent-browser printed; decode until it is an object.
-const decode = (s) => { let v = s; while (typeof v === "string") { try { v = JSON.parse(v); } catch { return {}; } } return v; };
-// Every number by its path. List entries key by their name or text ([value, count] pairs by value).
-const flat = (o, p = "", out = {}) => {
-  const each = Array.isArray(o) ? o.map((v, i) => (Array.isArray(v) && typeof v[1] === "number" ? [v[0], v[1]] : [v?.name ?? v?.text ?? i, v])) : Object.entries(o ?? {});
-  for (const [k, v] of each) {
-    const key = p ? `${p}.${k}` : `${k}`;
-    if (typeof v === "number") out[key] = v;
-    else if (v && typeof v === "object") flat(v, key, out);
-  }
-  return out;
-};
-const read = (f) => (fs.existsSync(f) ? flat(decode(fs.readFileSync(f, "utf8"))) : {});
-const files = [...new Set([a, b].flatMap((d) => fs.readdirSync(d)).filter((f) => f.endsWith(".json")))].sort();
-for (const f of files) {
-  const [before, after] = [read(path.join(a, f)), read(path.join(b, f))];
-  for (const k of Object.keys({ ...before, ...after }))
-    if (before[k] !== after[k]) console.log(`${f.slice(0, -5)} ${k}: ${before[k] ?? "-"} → ${after[k] ?? "-"}`);
-}
+const read = (d, f) => { let v = fs.existsSync(path.join(d, f)) ? fs.readFileSync(path.join(d, f), "utf8") : "{}"; while (typeof v === "string") { try { v = JSON.parse(v); } catch { return {}; } } return v; };
+const out = [];
+// The checks: gone, new, and a score that moved.
+const checks = (d) => new Map((read(d, "min-checks.json").checks || []).map((c) => [`${c.kind} ${c.where}`, c]));
+const [ca, cb] = [checks(a), checks(b)];
+for (const [k, c] of ca) if (!cb.has(k)) out.push(`gone: ${k} (${c.score})`);
+for (const [k, c] of cb) if (!ca.has(k)) out.push(`new: ${k} (${c.score})`);
+for (const [k, c] of cb) if (ca.has(k) && Math.abs(ca.get(k).score - c.score) >= 0.05) out.push(`score: ${k} ${ca.get(k).score} → ${c.score}`);
+// The inventory: distinct values and one-offs per list, near and far misses, words.
+const [ia, ib] = [read(a, "count.json"), read(b, "count.json")];
+for (const key of ["distinct", "oneOffs"]) for (const k of Object.keys({ ...ia[key], ...ib[key] })) if ((ia[key] || {})[k] !== (ib[key] || {})[k]) out.push(`${key} ${k}: ${(ia[key] || {})[k] ?? "-"} → ${(ib[key] || {})[k] ?? "-"}`);
+if (ia.words !== ib.words) out.push(`words: ${ia.words ?? "-"} → ${ib.words ?? "-"}`);
+const [ra, rb] = [read(a, "redline.json"), read(b, "redline.json")];
+for (const k of ["near", "far"]) if ((ra[k] || []).length !== (rb[k] || []).length) out.push(`redline ${k}: ${(ra[k] || []).length} → ${(rb[k] || []).length}`);
+console.log(out.length ? out.join("\n") : "Nothing measured changed.");
 EOF
   exit
 fi
 
-all="" url="-" try=""
+all="" url="-" try="" page=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --all) all=1; shift ;;
@@ -67,6 +65,7 @@ if [ -n "$try" ]; then
   [ -f "$out/min-checks.json" ] && [[ "$region" =~ ^[0-9]+$ ]] && { [ -z "$fixcss" ] || [ -f "$fixcss" ]; } || usage
   n="$region"
   region="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).region || "")' "$out/min-checks.json")"
+  page="$(node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).url || "")' "$out/min-checks.json")"
   out="$(mktemp -d)"
 fi
 if [ "$url" != "-" ] && [ -f "$url" ]; then url="file://$(cd "$(dirname "$url")" && pwd)/$(basename "$url")"; fi
@@ -74,8 +73,12 @@ if [ "$url" != "-" ] && [ -f "$url" ]; then url="file://$(cd "$(dirname "$url")"
 session="${AGENT_BROWSER_SESSION:-default}"
 export AGENT_BROWSER_SESSION="$session"
 if ! agent-browser session list 2>/dev/null | grep -Eq "(^|[[:space:]])$session\$"; then
+  # --try reopens the page the checks came from, and closes the session it opened.
+  if [ -n "$try" ] && [ "$url" = "-" ] && [ -n "$page" ]; then url="$page"; fi
   [ "$url" != "-" ] || { echo "No open page in agent-browser session '$session'; pass --url." >&2; exit 1; }
-  trap 'agent-browser close >/dev/null 2>&1 || true' EXIT
+  [ -z "$try" ] || trap 'agent-browser close >/dev/null 2>&1 || true' EXIT
+elif [ -n "$try" ] && [ "$url" = "-" ] && [ -n "$page" ] && [ "$(agent-browser get url)" != "$page" ]; then
+  url="$page"
 fi
 mkdir -p "$out"
 ab() { agent-browser "$@" >/dev/null; }
@@ -250,8 +253,25 @@ JS
       if (a === b || a.startsWith(b + "/") || b.startsWith(a + "/")) continue;
       if (Math.min(r1, r2) - Math.max(l1, l2) > 1 && Math.min(b1, lines[j][4]) - t2 > 1) over.add([a, b].sort().join(" "));
     }
-  const sizes = holders.map((h) => { const r = h.getBoundingClientRect(); return [r.width, r.height]; });
-  return JSON.stringify({ boxes, text, over: [...over], sizes });
+  // The holders, then their containers up to the region.
+  const frame = [...holders];
+  for (const h of holders) for (let a = h.parentElement; a && a !== layer.parentElement; a = a.parentElement) if (!frame.includes(a)) frame.push(a);
+  const sizes = frame.map((h) => { const r = h.getBoundingClientRect(); return [r.width, r.height]; });
+  // What each shares with its siblings (an outer edge, its width or height) and, when it holds
+  // elements, with its parent's content box (flush on a side), within 1px. Containers keep only
+  // the lines across (a fix may make them taller); a text-only holder may hug its text (a halo
+  // behind a chart label).
+  const shared = frame.map((h, i) => {
+    const r = h.getBoundingClientRect(), p = h.parentElement, sibs = [...(p?.children || [])].filter((s) => s !== h && s.getClientRects().length).map((s) => s.getBoundingClientRect());
+    const pr = p?.getBoundingClientRect(), ps = p && getComputedStyle(p), inner = (e) => pr[e] + (e === "left" || e === "top" ? 1 : -1) * (parseFloat(ps[`padding${e[0].toUpperCase()}${e.slice(1)}`]) + parseFloat(ps[`border${e[0].toUpperCase()}${e.slice(1)}Width`]));
+    const own = i < holders.length;
+    return [
+      ...(own ? ["left", "right", "top", "bottom"] : ["left", "right"]).filter((e) => sibs.some((q) => Math.abs(q[e] - r[e]) <= 1)).map((e) => `${e} edge with a sibling`),
+      ...(own ? ["width", "height"] : ["width"]).filter((d) => sibs.some((q) => Math.abs(q[d] - r[d]) <= 1)).map((d) => `${d} with its siblings`),
+      ...(pr && h.children.length ? ["left", "right"].filter((e) => Math.abs(inner(e) - r[e]) <= 1).map((e) => `${e} edge flush with its parent`) : []),
+    ];
+  });
+  return JSON.stringify({ boxes, text, over: [...over], sizes, shared, names: frame.map(name), held: holders.length });
 })()
 JS
   snapshot() { agent-browser eval "$layer $snap" >"$out/$1.boxes"; }
@@ -290,7 +310,7 @@ const whole = (t) => t && t[0] > 0 && t[1] >= t[0] * 0.99;
 // One width: A before, B after, S a second look before (what differs from A moves on its own).
 const judge = (A, B, S, styles, at) => {
   // What the holders' change in size pushes along.
-  const limit = Math.round(Math.max(0, ...A.sizes.flatMap((s, i) => s.map((v, j) => Math.abs(B.sizes[i][j] - v))))) + 2;
+  const limit = Math.round(Math.max(0, ...A.sizes.slice(0, A.held).flatMap((s, i) => s.map((v, j) => Math.abs(B.sizes[i][j] - v))))) + 2;
   const steady = (p) => !S || (S.boxes[p] && A.boxes[p].slice(0, 4).every((v, i) => Math.abs(v - S.boxes[p][i]) <= 1));
   const calm = (p) => !S || JSON.stringify(S.text[p]) === JSON.stringify(A.text[p]);
   const moved = Object.entries(A.boxes).flatMap(([p, [x, y, w, h, held, holds, name, toBottom, toRight, pinB, pinR]]) => {
@@ -310,7 +330,13 @@ const judge = (A, B, S, styles, at) => {
   const label = (p) => `"${(B.text[p] || A.text[p] || [, , p])[2]}"`;
   const was = new Set([...A.over, ...(S ? S.over : [])]);
   const runs = B.over.filter((pair) => !was.has(pair)).map((pair) => pair.split(" ").map(label).join(" over "));
+  // A flush edge is lost only when the holder's width changed: a box that shrinks off its column,
+  // not one the fix moves whole (centered).
+  const lost = A.shared.flatMap((edges, i) =>
+    edges.filter((e) => !B.shared[i].includes(e) && (!/flush/.test(e) || Math.abs(A.sizes[i][0] - B.sizes[i][0]) > 1)).map((e) => `${A.names[i]} ${e}`),
+  );
   return [
+    ...list(lost, "lost by the fix's elements or their containers"),
     ...list(styles, "style changes outside what the fix may change"),
     ...(moved.length ? [`${moved.length} boxes outside the fix moved (limit ${limit}px): ${moved.slice(0, 4).join(", ")}${moved.length > 4 ? ", …" : ""}`] : []),
     ...list(cut, "texts cut"),
@@ -330,11 +356,12 @@ const fails = [
   ...judge(snaps["narrow-before"], snaps["narrow-after"], null, slim.filter((x) => !wide.includes(x)), narrow),
 ];
 // A check under 0.5 is a note: the tools do not vouch for it, so its fix never passes.
-const verdict = fails.length ? "FAIL" : f.score < 0.5 ? "NOTE" : "PASS";
+const verdict = fails.length ? "FAIL" : f.score < 0.5 ? "NOTE" : "CLEAN";
 console.log(`${verdict} ${key}: ${file || f.apply.map((r) => `${r.selector} { ${r.property}: ${r.value} }`).join(" ")}`);
 for (const x of fails) console.log(`  ${x}`);
 if (verdict === "NOTE") console.log(`  nothing measured got worse, but at score ${f.score} this is a note; judge it by eye.`);
-process.exitCode = { PASS: 0, FAIL: 1, NOTE: 2 }[verdict];
+if (verdict === "CLEAN") console.log("  the check is gone and nothing else measured changed; look at the page before you call the fix good.");
+process.exitCode = { CLEAN: 0, FAIL: 1, NOTE: 2 }[verdict];
 EOF
   rm -rf "$out"
   exit $status
@@ -354,10 +381,10 @@ done
 # under it has been a real problem. Each line's number is its place in min-checks.json, for --try;
 # checks of one kind with the same edit print as one line naming every holder. The list is the
 # floor: the last line sends the reader to the images.
-node - "$out" "$region" <<'EOF'
+node - "$out" "$region" "$(agent-browser get url)" <<'EOF'
 const fs = require("node:fs");
 const path = require("node:path");
-const [out, region] = process.argv.slice(2);
+const [out, region, url] = process.argv.slice(2);
 const family = { rhythm: "layout", "dead-zone": "layout", collision: "layout", break: "layout", sibling: "composition", crowding: "composition", edge: "alignment", baseline: "alignment", inset: "alignment", control: "tokens", contrast: "tokens" };
 const weight = { layout: 1, composition: 0.9, alignment: 0.85, tokens: 0.7 };
 const read = (f) => { try { return JSON.parse(fs.readFileSync(path.join(out, f), "utf8")); } catch { return {}; } };
@@ -372,7 +399,7 @@ const byFamily = Object.keys(weight).map((k) => [k, open.filter((f) => f.family 
 const heading = `Minimum checks: ${open.length ? `${byFamily.map(([k, n]) => `${n} ${k}`).join(", ")}${byFamily[0][0] === "layout" ? "; fix layout before parts" : ""}` : "none at score 0.5 or more"}.`;
 const stress = ["long", "many"].map((v) => [v, read(`view-${v}.json`).broke]).filter(([, b]) => b);
 const breaks = ([v, b]) => `${v} ${b.length} new breaks${b.length ? ` (${b.slice(0, 3).map((x) => `${x.at} ${x.kind}${x.n > 1 ? ` x${x.n}` : ""}`).join(", ")}${b.length > 3 ? ", …" : ""})` : ""}`;
-fs.writeFileSync(path.join(out, "min-checks.json"), JSON.stringify({ region, total: found.length, checks: found }, null, 1));
+fs.writeFileSync(path.join(out, "min-checks.json"), JSON.stringify({ url, region, total: found.length, checks: found }, null, 1));
 const edit = (f) => (f.apply?.length ? `${f.kind} ${f.apply.map((a) => `${a.property}:${a.value}`).sort().join(";")}` : `${f.tool} ${f.n}`);
 const groups = [...open.reduce((m, f) => m.set(edit(f), [...(m.get(edit(f)) || []), f]), new Map()).values()];
 const line = ([f, ...more]) =>

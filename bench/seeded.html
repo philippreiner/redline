@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Seeded defects</title>
+<style>
+body{margin:0;font:14px/1.45 -apple-system,Helvetica,sans-serif;color:#1f2328;background:#f6f7f9}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+nav{background:#fff;border-right:1px solid #e3e6ea;padding:16px}
+nav a{display:block;padding:6px 8px;color:#444;text-decoration:none}
+main{padding:24px 32px}
+h1{font-size:20px;margin:0 0 4px}
+.sub{color:#9aa1a9;margin:0 0 20px}            /* defect 5: contrast 2.44:1 on #f6f7f9 */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.tile{background:#fff;border:1px solid #e3e6ea;border-radius:8px;padding:16px}
+.tile.b{padding:16px 16px 16px 19px}            /* defect 1: left inset 19 where siblings have 16 */
+.tile dt{font-size:12px;color:#6b7280;margin:0 0 6px}
+.tile dd{font-size:24px;font-weight:600;margin:0}
+.tile.c dd{font-size:22px}                      /* defect 4: value 22px where siblings are 24px */
+.card{background:#fff;border:1px solid #e3e6ea;border-radius:8px;padding:16px;margin-bottom:24px}
+.card h2{font-size:14px;margin:0 0 12px}
+.card.two h2{margin-left:2px}                   /* defect 2: heading 2px right of the card's content edge */
+table{width:100%;border-collapse:collapse}
+td,th{text-align:left;padding:8px 8px;border-bottom:1px solid #eef0f2}
+th{font-size:12px;color:#6b7280;font-weight:500}
+td.num,th.num{text-align:right}
+td.num.off{padding-right:11px}                  /* defect 3: right edge 3px left of its column */
+.chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px}
+.actions{display:flex;gap:8px}
+button{height:32px;padding:0 12px;border:1px solid #d0d5db;border-radius:6px;background:#fff;font:inherit}
+button.primary{background:#2a5bd7;color:#fff;border-color:#2a5bd7;height:34px} /* defect 7: 34px beside 32px */
+.muted{color:#b4b9c0}                           /* defect 6: contrast 1.97:1 on #fff */
+</style>
+</head>
+<body>
+<div class="shell">
+<nav><a href="#">Home</a><a href="#">Projects</a><a href="#">Reviews</a><a href="#">Settings</a></nav>
+<main>
+<h1>Portfolio review</h1>
+<p class="sub">Week 44, 12 projects, 3 need attention</p>
+<div class="tiles">
+<dl class="tile a"><dt>Open risks</dt><dd>17</dd></dl>
+<dl class="tile b"><dt>Overdue actions</dt><dd>4</dd></dl>
+<dl class="tile c"><dt>Budget variance</dt><dd>+3.2 %</dd></dl>
+</div>
+<section class="card one">
+<h2>Projects needing attention</h2>
+<table>
+<thead><tr><th>Project</th><th>Owner</th><th>Status</th><th class="num">Budget</th><th class="num">Due</th></tr></thead>
+<tbody>
+<tr><td>ERP migration wave 2</td><td>M. Keller</td><td><span class="chip">At risk</span></td><td class="num">1.2 M</td><td class="num">14.11.2026</td></tr>
+<tr><td>Identity platform</td><td>S. Brandt</td><td><span class="chip">On track</span></td><td class="num off">480 k</td><td class="num">Nov 21</td></tr>
+<tr><td>Data center exit</td><td>A. Novak</td><td>Blocked</td><td class="num">2.8 M</td><td class="num">02.12.2026</td></tr>
+<tr><td>Service desk tooling</td><td>J. Ortiz</td><td><span class="chip">On track</span></td><td class="num">210 k</td><td class="num">30.11.2026</td></tr>
+</tbody>
+</table>
+</section>
+<!-- Not a defect: a full-width card with short content, like its sibling above. view.js bands scored it dead-zone 0.9 with fix width: fit-content. -->
+<section class="card two">
+<h2>Follow-ups</h2>
+<p class="muted">Last synced 2 minutes ago</p>
+<div class="actions"><button class="primary">Send review</button><button>Export</button><button>Snooze</button></div>
+</section>
+</main>
+</div>
+</body>
+</html>

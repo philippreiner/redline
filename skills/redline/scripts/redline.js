@@ -4,7 +4,8 @@
 // photos) compare with each other; things inside a card compare with things inside the
 // column's other cards, so sibling cards' contents line up across cards. Pink guides run
 // down where three or more starts share an x or along a painted edge (dashed: shared right
-// edges) and across through shared box and edge tops and bottoms, each over its column only.
+// edges) and across through shared box and edge tops and bottoms, each over its column only,
+// its count in small light digits at one end, left out where it would cover text or a badge.
 // A red mark sits on a start 1 to 3px off a guide, an orange one 4 to 8px off (12px inside a
 // card); of two guides within 8px the weaker one's members are off. A start is measured only
 // against starts in its own painted container, or, on the column, against the column's own;
@@ -12,12 +13,15 @@
 // its column's cards use, on its left or its right, is one `inset` check. Not starts: data
 // (scene `isData`: charts, waveforms, avatar stacks), the inner text of a box (chip, button,
 // input), inline text that follows other text on its line, and cells of a table: a table is
-// one unit, its outer edges plus one start per table column. Right edges count like starts for
-// boxes, cards, dividers, photos, tables, the last table column (its cells' content edge), and
-// right-aligned text; never a ragged text end, an icon, or anything followed on its line. A
-// thing off on both sides by the same amount is one check with the symmetric fix
-// (`padding-inline`); off on one side, the fix names that side under the same `kind where`, so
-// a half edit still shows.
+// one unit, its outer edges plus one start per table column, and inside it each column's cells
+// line up on their own: the right content edge of right-aligned cells, else the left, 1 to 8px
+// off the line most of the column shares is an `edge` check. A start 1 to 3px off its own
+// card's content edge, where its card-mates sit, scores like one 4px off. Right edges count
+// like starts for boxes, cards, dividers, photos, tables, the last table column (its cells'
+// content edge), and right-aligned text; never a ragged text end, an icon, or anything
+// followed on its line. A thing off on both sides by the same amount is one check with the
+// symmetric fix (`padding-inline`); off on one side, the fix names that side under the same
+// `kind where`, so a half edit still shows.
 // Horizontal lines get the same care. `inset` also compares a card's first text's distance below
 // its top edge (a header that a taller button centres lower: padding-block) and its last
 // content's distance above its bottom edge across cards of one kind, in neighbouring columns too.
@@ -589,6 +593,43 @@
           }
         }
       }
+    // Table cells: in each table column, the cells' content edges (the right edge of right-aligned
+    // cells, else the left) sit on one line. A cell 1 to 8px off the line three or more of its
+    // column's cells share (and more than half) is an `edge` miss against them, its guide drawn.
+    const content = (cell) => {
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      const rs = [...range.getClientRects()].filter((q) => q.width > 0 && q.height > 0);
+      if (!rs.length) return null;
+      const [l, t, r, b] = [Math.min(...rs.map((q) => q.left)), Math.min(...rs.map((q) => q.top)), Math.max(...rs.map((q) => q.right)), Math.max(...rs.map((q) => q.bottom))];
+      return { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t };
+    };
+    for (const t of tables) {
+      const n = Math.max(0, ...[...t.rows].map((row) => row.cells.length)),
+        trs = [...t.rows].filter((row) => row.cells.length === n && [...row.cells].every((c) => c.colSpan === 1));
+      for (let i = 0; i < n; i++)
+        for (const axis of ["x", "end"]) {
+          const got = trs.flatMap((row) => {
+            const cell = row.cells[i],
+              ta = getComputedStyle(cell).textAlign,
+              q = !skip(cell) && shown(cell) && !/center/.test(ta) && /right|end/.test(ta) === (axis === "end") && content(cell);
+            return q && inView(q) ? [{ el: cell, r: q, kind: "tcol", label: short(cell.innerText), at: Math.round(axis === "end" ? q.right : q.left) }] : [];
+          });
+          const votes = (v) => got.filter((g) => Math.abs(g.at - v) <= 1).length,
+            mode = got.map((g) => g.at).sort((a, b) => votes(b) - votes(a))[0],
+            refs = got.filter((g) => g.at === mode);
+          if (mode === undefined || refs.length < 3 || votes(mode) <= got.length / 2) continue;
+          const off = got.filter((g) => Math.abs(g.at - mode) >= 1 && Math.abs(g.at - mode) <= 8);
+          for (const g of off) misses.push({ s: { ...g, col: column(t), holder: container(t) }, axis, at: g.at, guide: mode, off: g.at - mode, refs, cell: true });
+          if (off.length)
+            (axis === "end" ? ends : lines).push({
+              x: mode - (axis === "end" ? 1 : 0),
+              n: refs.length,
+              top: Math.min(...got.map((g) => g.r.top)) - 4,
+              bottom: Math.max(...got.map((g) => g.r.bottom)) + 4,
+            });
+        }
+    }
 
     // Style lines across a row: in three or more sibling cells side by side (KPI tiles, cards), each
     // text style (size, weight, color) that most cells carry sits on one line, its first line's baseline.
@@ -1129,13 +1170,20 @@
         list: [m],
       });
     };
+    // A container's content edge: inside its border and padding.
+    const padEdge = (n, axis) => {
+      const q = n.getBoundingClientRect();
+      return axis === "x" ? q.left + px(n, "borderLeftWidth") + px(n, "paddingLeft") : q.right - px(n, "borderRightWidth") - px(n, "paddingRight");
+    };
     for (const m of misses) {
-      const strongRef = m.refs.length >= 4 || m.refs.some((s) => s.kind === "edge");
+      // A table column's line, and a start's own card's content edge its card-mates sit on, are strong references.
+      const strongRef = m.refs.length >= 4 || m.refs.some((s) => s.kind === "edge") || m.cell,
+        onPad = m.axis !== "y" && m.s.kind !== "tcol" && m.s.holder && Math.abs(padEdge(m.s.holder, m.axis) - m.guide) <= 1;
       add(
         "edge",
         m,
         propFix(m),
-        (Math.abs(m.off) <= 3 ? 0.4 : 0.5) +
+        (Math.abs(m.off) <= 3 && !onPad ? 0.4 : 0.5) +
           (strongRef ? 0.1 : 0) +
           (big(m.s) ? 0.1 : 0) -
           (m.axis === "y" ? 0.15 : 0) -
@@ -1389,11 +1437,9 @@
       :host { all: initial; }
       i { position: absolute; display: block; }
       .v { width: 1px; background: rgb(230 0 90 / .7); }
-      .v::before { content: attr(data-n); position: absolute; top: 2px; left: 3px; font: 600 9px/1 ui-monospace, Menlo, monospace; color: rgb(230 0 90); }
       .r { width: 0; background: none; border-left: 1px dashed rgb(230 0 90 / .75); }
-      .r::before { top: auto; bottom: 2px; left: auto; right: 3px; }
       .h { height: 1px; background: rgb(230 0 90 / .45); }
-      .h::before { content: attr(data-n); position: absolute; top: -10px; left: 2px; font: 600 9px/1 ui-monospace, Menlo, monospace; color: rgb(230 0 90); }
+      i > span { position: absolute; font: 400 8px/1 ui-monospace, Menlo, monospace; color: rgb(230 0 90 / .6); }
       .edge { box-shadow: none; background: rgb(230 0 0); }
       .edge.far { background: rgb(245 130 0); }
       .miss { box-shadow: 0 0 0 1.5px rgb(230 0 0); border-radius: 2px; }
@@ -1404,9 +1450,9 @@
       .baseline, .inset { box-shadow: 0 0 0 1.5px rgb(120 60 220); }
       .baseline b, .inset b { background: rgb(120 60 220); }
       .x { height: 0; border-top: 1px dashed rgb(120 60 220 / .8); }
-    </style>${across.map((l) => `<i class="x" style="left:${l.left}px;top:${l.y}px;width:${l.right - l.left}px"></i>`).join("")}${rows.map((l) => `<i class="h" style="left:${l.left}px;top:${l.y}px;width:${l.right - l.left}px" data-n="${l.n}"></i>`).join("")}${lines
-      .map((l) => `<i class="v" style="left:${l.x}px;top:${l.top}px;height:${l.bottom - l.top}px" data-n="${l.n}"></i>`)
-      .join("")}${ends.map((l) => `<i class="v r" style="left:${l.x}px;top:${l.top}px;height:${l.bottom - l.top}px" data-n="${l.n}"></i>`).join("")}${[
+    </style>${across.map((l) => `<i class="x" style="left:${l.left}px;top:${l.y}px;width:${l.right - l.left}px"></i>`).join("")}${rows.map((l) => `<i class="h" style="left:${l.left}px;top:${l.y}px;width:${l.right - l.left}px"><span>${l.n}</span></i>`).join("")}${lines
+      .map((l) => `<i class="v" style="left:${l.x}px;top:${l.top}px;height:${l.bottom - l.top}px"><span>${l.n}</span></i>`)
+      .join("")}${ends.map((l) => `<i class="v r" style="left:${l.x}px;top:${l.top}px;height:${l.bottom - l.top}px"><span>${l.n}</span></i>`).join("")}${[
       ...misses.map((m) => [m, "edge"]),
       ...heads.map((m) => [m, "edge"]),
       ...rowPairs.map((m) => [m, "baseline"]),
@@ -1456,6 +1502,32 @@
       const best = spots.find((p) => !p.cost) || spots.sort((p, q) => p.cost - q.cost)[0];
       Object.assign(b.style, { left: `${best.x - P.left}px`, top: `${best.y - P.top}px` });
       placed.push(best.a);
+    }
+    // A guide's count sits at one end of its guide, beside it, where it covers no text and no badge; else it is left out.
+    for (const s of root.querySelectorAll("i > span")) {
+      const P = s.parentElement.getBoundingClientRect(),
+        { width: w, height: h } = s.getBoundingClientRect(),
+        [head, tail] = [P.top + 2, P.bottom - h - 2];
+      const spots = s.parentElement.classList.contains("h")
+        ? [
+            [P.left + 2, P.top - h - 2],
+            [P.right - w - 2, P.top - h - 2],
+            [P.left + 2, P.top + 3],
+            [P.right - w - 2, P.top + 3],
+          ]
+        : (s.parentElement.classList.contains("r") ? [tail, head] : [head, tail]).flatMap((y) => [
+            [P.left + 3, y],
+            [P.left - w - 2, y],
+          ]);
+      const spot = spots
+        .map(([x, y]) => ({ x, y, a: { left: x, top: y, right: x + w, bottom: y + h } }))
+        .find(({ a }) => a.left >= 0 && a.top >= 0 && a.right <= innerWidth && a.bottom <= innerHeight && !cover(a, inked) && !cover(a, placed));
+      if (!spot) {
+        s.remove();
+        continue;
+      }
+      Object.assign(s.style, { left: `${spot.x - P.left}px`, top: `${spot.y - P.top}px` });
+      placed.push(spot.a);
     }
 
     const item = (m) => ({

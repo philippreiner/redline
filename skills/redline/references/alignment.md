@@ -24,6 +24,7 @@ A 2px offset is hard to see by eye, so measure it. Run `redline.js` on each regi
 
 - Keep the scale short: about six steps, each with a job, such as 4 inside a part, 8 between parts, 12 from a title to its content, 16 or 24 between groups, 32 or 48 between regions.
 - Every gap and padding comes from the scale. A value off the scale is a defect; a new step needs two places that need it.
+- The scale sits on a 4px grid: gaps, paddings, and fixed heights are multiples of 4. A 2px step is fine inside a small control, and an odd value that exactly centers something stays. `view.js` `grid` draws the grid under the shared edges; `count.js` `offGrid` lists the values off it.
 - Inside a group is at most half the gap between groups, every time.
 - `count.js` `gaps` lists the gaps in use; more values than the scale has steps is drift.
 

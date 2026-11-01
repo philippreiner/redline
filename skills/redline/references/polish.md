@@ -6,7 +6,7 @@ Spot checks, once, after every lens holds. Each is a question; a "no" is a findi
 
 - Can one more element, label, line, or box go without loss? Take it out and look again.
 - Does each section hold something, and does each job have one way to do it?
-- Are the generic tells gone: gradients and glows in chrome, a hero band, a row of stat tiles that say little, an icon in a tinted circle on every card, an eyebrow over every title, everything in a card, everything centered, emoji?
+- Are the generic tells of [slop.md](slop.md) gone, and does the screen pass the template check?
 
 ## Variance
 
