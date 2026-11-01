@@ -17,12 +17,14 @@
 //               gutters between side-by-side boxes with nothing between them. Checks, each 4px or more
 //               off: a heading with less space above than below, same-role gaps or gutters
 //               apart, except a wider gap after a card's edge (rhythm); a painted box leaving
-//               120px or more empty on one side, or an empty run in a column of 200px and 3x
-//               its largest section gap (dead-zone); text running into other text, across a
-//               box edge, or under an icon (collision); at rest, text cut with no ellipsis, an
-//               ID-like token wrapped inside itself, or a label struck by a line, chart labels
-//               included (break; its fix is tried in place first, its text names every label it
-//               holds). Charts and data are one block. Badges sit off the text they flag; gap and
+//               120px or more empty on one side whose siblings share neither its width nor its
+//               share of content, or an empty run in a column of 200px and 3x its largest
+//               section gap (dead-zone); text running into other text, across a box edge, or
+//               under an icon (collision); at rest, text cut with no ellipsis, a short value (a
+//               date, ID, number, amount, a few words) or one its column's other values show
+//               whole cut to an ellipsis, an ID-like token wrapped inside itself, or a label
+//               struck by a line, chart labels included (break; its fix is tried in place first,
+//               its text names every label it holds). Charts and data are one block. Badges sit off the text they flag; gap and
 //               gutter labels take a spot clear of text, data, and other labels, else are left out.
 //   "grid"      an 8px grid from the layer's content-box corner, the column edges, and the
 //               edges three or more things in one card or column share (right edges only of boxes
@@ -30,9 +32,10 @@
 //               heavier than the grid; across each row of side-by-side boxes, in orange, card tops
 //               and bottoms (faint) and the card edges and header baselines (dashed) two or more
 //               of them share, strong and joined across the gutters; no checks.
-//   "long"      every text grows by 80%, a phrase by whole words, a single word as one long
-//               compound, and counts outside data and not before a % grow to thousands; other
-//               digits and key hints (⌘K) keep their shape; placeholders grow too
+//   "long"      every text grows by 80% the way a longer language does: a phrase by longer
+//               words and extra words, a single word as one long compound, word boundaries kept;
+//               counts outside data and not before a % grow to thousands; other digits and key
+//               hints (⌘K) keep their shape; placeholders grow too
 //   "many"      the first visible list repeats its rows up to window.__stressRows (50), the
 //               copies after its last row in view that no divider follows, so they land in
 //               view and its other children (a NOW line) keep their neighbours
@@ -46,7 +49,7 @@
 // than its field (clipped), an
 // ID-like token wrapped inside itself (wraps), or running into other text, across the edge
 // of a filled box or an icon, or struck by a line (overlaps); an
-// ellipsis or a line clamp that renders is designed and not counted (an inline-block,
+// ellipsis or a line clamp that renders is designed and not counted here (an inline-block,
 // inline-flex, or inline-grid between the text and the clip cuts hard). wireframe, notext,
 // and textonly cover the whole page,
 // or window.__axesLayer (an element or a selector). Screenshot after it runs;
@@ -459,25 +462,54 @@
       };
 
       if (mode === "long") {
-        // A count alone ("7", "148") outside data and not before a % grows to thousands. Words grow
-        // by 80%, a single word as one long compound; other tokens with a digit (codes, IDs, dates,
-        // times, "Halle 2") and initials or abbreviations of up to three capitals keep their shape.
+        // A count alone ("7", "148") outside data and not before a % grows to thousands. Text grows by
+        // 80% the way a longer language does: a single word as one compound ("Exportverwaltung"); a
+        // phrase by longer words (a compound tail on words of four letters or more, up to half the
+        // growth) and then extra words before its closing punctuation, whole words only, so it reads
+        // as text and the stress never reads as a cut. Tokens with a digit (codes, IDs), a value with a
+        // number and at most two words (a date, a time, "Halle 2", "Target 95 %"), and initials or
+        // abbreviations of up to three capitals keep their shape.
         const after = (t) => {
           const w = document.createTreeWalker(layer, NodeFilter.SHOW_TEXT);
           w.currentNode = t;
           for (let n = w.nextNode(); n; n = w.nextNode()) if (n.nodeValue.trim()) return n.nodeValue.trim();
           return "";
         };
+        const tails = ["amt", "werk", "plan", "zeit", "liste", "daten", "bereich", "übersicht", "verwaltung", "einstellungen"];
+        const filler = ["für", "alle", "offenen", "Einträge", "im", "Bereich", "der", "Planung"];
+        // The shortest tails that reach n letters (within one letter of each other), one of two picked by
+        // the word, so the tails vary and the growth stays near 80%.
+        const tail = (n, w) => {
+          let s = "";
+          while (s.length < n) {
+            const fits = tails.filter((x, _, all) => x.length >= n - s.length && x.length <= (all.find((y) => y.length >= n - s.length)?.length ?? 0) + 1);
+            s += fits.length ? fits[(w.length + s.length) % Math.min(2, fits.length)] : tails.at(-1);
+          }
+          return s;
+        };
         const grow = (text, t) => {
           if (/^\d{1,3}$/.test(text)) return t && !isData(t.parentElement) && !after(t).startsWith("%") ? (Number(text) * 1000 + 284).toLocaleString("en-US") : text;
-          const words = text.split(/\s+/).filter((w) => /\p{L}/u.test(w) && !/[\d\p{S}]/u.test(w) && !/^\p{Lu}{1,3}$/u.test(w));
-          if (!words.length) return text;
-          // A single word grows by 80% as one compound; a phrase by whole words up to 80% or just past it,
-          // so the stress itself never reads as a cut ("Browser extension ac").
-          if (words.length === 1 && text === words[0]) return text + text.slice(0, Math.ceil(text.length * 0.8)).toLowerCase();
-          let more = "";
-          for (const w of words) if (more.length < text.length * 0.8) more += (more ? " " : "") + w;
-          return `${text} ${more}`;
+          const growable = (w) => /\p{L}/u.test(w) && !/[\d\p{S}]/u.test(w) && !/^\p{Lu}{1,3}$/u.test(w);
+          const words = text.split(/\s+/).filter(growable);
+          if (!words.length || (/(^|\s)[\p{Sc}+\-−]?\d/u.test(text) && words.length <= 2)) return text;
+          const caps = (s) => (/\p{Ll}/u.test(text) ? s : s.toUpperCase());
+          const need = Math.ceil(text.length * 0.8);
+          if (words.length === 1 && text === words[0]) return text + caps(tail(need, text));
+          let added = 0;
+          const out = text
+            .split(/(\s+)/)
+            .map((w) => {
+              const m = growable(w) && added < need / 2 && w.match(/^(.*\p{L}{4})(\p{P}*)$/u);
+              if (!m) return w;
+              const s = caps(tail(Math.ceil(m[1].length * 0.4), m[1]));
+              added += s.length;
+              return m[1] + s + m[2];
+            })
+            .join("");
+          const more = [];
+          for (let i = 0; added < need; i++) (more.push(caps(filler[i % filler.length])), (added += filler[i % filler.length].length + 1));
+          const [, body, end] = out.match(/^(.*?)([.,:;!?…)\]"'”’»]*)$/su);
+          return more.length ? `${body} ${more.join(" ")}${end}` : out;
         };
         const shownText = (el) =>
           el &&
@@ -1186,12 +1218,10 @@
         }
       }
       // Dead zones: a painted box whose content, ending in a box (not ragged text), leaves 120px or
-      // more empty on one side and under 60% filled, or 4x the space on the other side.
-      const zones = [];
-      for (const el of layer.querySelectorAll("*")) {
-        if (isData(el) || el.closest("svg") || el.matches("button, a, input, select, textarea, [role=button], label") || !shown(el) || !paintedBox(el)) continue;
-        const r = el.getBoundingClientRect();
-        if (r.width < 240 || r.height < 48 || !inX(r)) continue;
+      // more empty on one side and under 60% filled, or 4x the space on the other side, and that breaks
+      // with its siblings: none shares its width (within 2px) and no painted one its share of content
+      // (within 0.15). A box alone in its parent, or one as wide as its siblings, is the layout.
+      const extent = (el) => {
         let lo = null,
           hi = null;
         const boxes = [];
@@ -1207,7 +1237,17 @@
           if (n.matches("svg, img, canvas, video, picture, input, select, textarea, button") || paintedBox(n)) (take(q, n, true), boxes.push(q));
           else for (const c of n.childNodes) if (c.nodeType === 3 && c.nodeValue.trim()) (range.selectNodeContents(c), [...range.getClientRects()].forEach((t) => take(t, n, false)));
         }
+        return { lo, hi, boxes, fill: lo ? (hi.x - lo.x) / el.getBoundingClientRect().width : 0 };
+      };
+      const zones = [];
+      for (const el of layer.querySelectorAll("*")) {
+        if (isData(el) || el.closest("svg") || el.matches("button, a, input, select, textarea, [role=button], label") || !shown(el) || !paintedBox(el)) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width < 240 || r.height < 48 || !inX(r)) continue;
+        const { lo, hi, boxes, fill } = extent(el);
         if (!lo || boxes.some((q) => Math.abs((q.left + q.right) / 2 - (r.left + r.right) / 2) <= 8)) continue; // a centered box is deliberate
+        const sibs = [...el.parentElement.children].filter((k) => k !== el && shown(k) && k.getClientRects().length && !/absolute|fixed/.test(getComputedStyle(k).position));
+        if (!sibs.length || sibs.some((k) => Math.abs(k.getBoundingClientRect().width - r.width) <= 2 || (paintedBox(k) && Math.abs(extent(k).fill - fill) <= 0.15))) continue;
         const left = lo.x - r.left,
           right = r.right - hi.x,
           big = Math.max(left, right),
@@ -1389,7 +1429,15 @@
         );
       };
       const firstFix = (cands, ok) => cands.find((edits) => edits.length && trial(edits, ok)) || [];
-      const asEdits = (edits) => edits.flatMap(([n, property, value]) => edit(n, property, value));
+      const asEdits = (edits) => [
+        ...edits
+          .reduce((m, [n, property, value]) => {
+            const k = `${property}|${value}`;
+            (m.get(k) || m.set(k, { els: [], property, value }).get(k)).els.push(n);
+            return m;
+          }, new Map())
+          .values(),
+      ];
       const say = (edits) => edits.map(([n, p, v]) => `${p} to ${v}`).join(", ") + (edits.length ? ` on ${sel(edits[0][0])}` : "");
       const breaking = new Map();
       // One check per break kind, element name, and cause; its text and fix name every label it holds
@@ -1430,6 +1478,92 @@
             edits.length ? `Set ${say(edits)}; ${sel(el)} ${q} is cut by ${off}px with no ellipsis.` : `No CSS-only fix keeps ${q} whole inside ${sel(n)}; shorten it or give it room in the markup.`,
           edits: asEdits(edits),
           score: 0.8,
+          zone: n.getBoundingClientRect(),
+        });
+      }
+      // A value cut to an ellipsis. An ellipsis is designed on a long text (a title in a list) and a break
+      // on a short value (a date, ID, number, amount, or up to three words in 16 characters), 0.7, or on
+      // a text no longer than its column's other values (same name, same left edge) that all show whole,
+      // 0.6. It renders when the text passes the content box of the box that draws it, by any fraction.
+      const ellipsisOf = (el) => {
+        for (let n = el; n && n !== layer; n = n.parentElement) {
+          const cs = getComputedStyle(n);
+          if (/hidden|clip/.test(cs.overflowX)) return cs.textOverflow === "ellipsis" ? n : null;
+          if (/^inline-(block|flex|grid)$/.test(cs.display)) return null;
+        }
+        return null;
+      };
+      const shortBy = (el) => {
+        const n = ellipsisOf(el);
+        if (!n) return 0;
+        const cs = getComputedStyle(n),
+          o = n.getBoundingClientRect(),
+          l = o.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft),
+          r = o.right - parseFloat(cs.borderRightWidth) - parseFloat(cs.paddingRight);
+        return Math.max(0, ...textRects(el).map((q) => Math.max(q.right - r, l - q.left)));
+      };
+      const columnOf = (el) => {
+        const x = el.getBoundingClientRect().left;
+        let ms = [];
+        try {
+          ms = [...document.querySelectorAll(sel(el))];
+        } catch {}
+        return ms.filter((m) => m !== el && textRects(m).length && Math.abs(m.getBoundingClientRect().left - x) <= 2);
+      };
+      const valueCut = (el) => {
+        if (shortBy(el) <= 0.01) return 0;
+        const s = label(el),
+          words = s.split(/\s+/).length,
+          col = columnOf(el),
+          rest = col.length >= 2 && col.every((m) => shortBy(m) <= 0.01) && s.length <= Math.max(...col.map((m) => label(m).length));
+        return (s.length <= 16 && words <= 3) || (/\d/.test(s) && s.length <= 24 && words <= 4) ? { score: 0.7, rest } : rest ? { score: 0.6, rest } : 0;
+      };
+      const valueCuts = () => new Set([...new Set(brk.runs.map((x) => x.el))].filter((el) => open(el) && valueCut(el)));
+      const cutNow = valueCuts();
+      for (const el of cutNow) {
+        const n = ellipsisOf(el),
+          off = shortBy(el),
+          { score, rest } = valueCut(el),
+          w = n.getBoundingClientRect().width,
+          want = round4(w + off, true);
+        // A table cell takes the width from its column: the col when the table has one, else every cell.
+        const cell = n.closest("td, th"),
+          table = cell?.closest("table"),
+          i = cell?.cellIndex,
+          col = table?.querySelectorAll(":scope > colgroup > col, :scope > col")[i],
+          cells = table ? [...table.rows].map((row) => row.cells[i]).filter(Boolean) : [],
+          ws = getComputedStyle(n).whiteSpace,
+          nowrap = /nowrap|pre$/.test(ws) ? [] : [[n, "white-space", "nowrap"]];
+        const pad = (c) => {
+          const cs = getComputedStyle(c);
+          return cs.boxSizing === "border-box" ? 0 : ["Left", "Right"].reduce((s, d) => s + parseFloat(cs[`padding${d}`]) + parseFloat(cs[`border${d}Width`]), 0);
+        };
+        const edits = firstFix(
+          cell
+            ? [[...nowrap, ...(col ? [[col, "width", `${want}px`]] : cells.map((c) => [c, "width", `${want - pad(c)}px`]))]]
+            : [
+                [[n, "flex-shrink", "0"]],
+                [
+                  [n, "min-width", "max-content"],
+                  [n, "flex-shrink", "0"],
+                ],
+              ],
+          () => shortBy(el) <= 0.01 && whole(el) && [...valueCuts()].every((m) => cutNow.has(m)),
+        );
+        const on = cell ? `${col ? "the col of" : "every cell of"} column ${i + 1} in ${sel(table)}` : "";
+        addBreak(`ellipsis|${sel(el)}|${sel(n)}`, el, {
+          where: sel(el),
+          text: label(el),
+          against: `cut to an ellipsis by ${sel(n)} at ${Math.round(w)}px${rest ? ", where its column's other values show whole" : ""}`,
+          off: Math.ceil(off),
+          fix: (q) =>
+            !edits.length
+              ? `No CSS-only fix keeps ${q} whole in ${sel(n)} without cutting another value; give it ${want}px in the markup or shorten it.`
+              : cell
+                ? `Set width to ${want}px on ${on}${nowrap.length ? ` and white-space to nowrap on ${sel(n)}` : `, keeping white-space: nowrap`}; ${q} shows as an ellipsis, ${Math.ceil(off)}px too long for its cell.`
+                : `Set ${say(edits)}; ${q} shows as an ellipsis, ${Math.ceil(off)}px too long for ${sel(n)}.`,
+          edits: asEdits(edits),
+          score,
           zone: n.getBoundingClientRect(),
         });
       }

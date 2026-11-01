@@ -6,9 +6,13 @@
 //   sibling   one of 4+ sibling containers of one kind (tag and first class) differs from the rest in
 //             fill or border, padding, or first-text style; or a few cells of one column in a table or
 //             in 4+ repeated rows rendered unlike the rest: a link among plain text, a chip among bare
-//             text, another size or weight, the same text in another color. A chip's hue and a colored
+//             text, another size or weight, the same text in another color; or one text of a row of 3+
+//             like cards styled unlike its row-mates (a 22px value beside two 24px ones; `apply` copies
+//             theirs); or a value format a third of a column's values or fewer use (a second date
+//             format among dd.mm.yyyy; rewriting it is data, no `apply`). A chip's hue and a colored
 //             value that is no link (an overdue date) are designed and stay quiet. Links among plain
-//             text are a markup fix (link every cell, or none), with no `apply`.
+//             text and plain text among chips are one markup fix (link every cell or none, chip every
+//             cell) at 0.6, with no `apply`; a placeholder ("–") among chips stays a note.
 //   control   controls in one group (the nearest box holding two or more) whose heights differ by 1 to 4px.
 //   contrast  text under WCAG AA (4.5, or 3 for 24px or 18.66px bold text) against its painted
 //             background, its and its ancestors' opacity multiplied into the ink; one check per text
@@ -21,7 +25,9 @@
 // names the same elements.
 // Plus the style inventory of the whole layer (font families, sizes, weights, line heights, text
 // colors, backgrounds, radii, lines, shadows, icons, gaps, buttons, controls; scrolled out of view
-// too), tokens and off-token values, unnamed controls, small targets, `words` (every visible word in
+// too), tokens and off-token values, unnamed controls, small targets, `slop` (the tells of an
+// undesigned screen a script can see), `offGrid` (paddings and gaps off the 4px grid),
+// `nestedRadius` (inner radii larger than their box's radius minus the inset), `words` (every visible word in
 // the layer, scrolled out of view too), `rows` and `cards` (sizes and emphases), and `text` (nothing
 // lines, value formats, repeats, truncation). Data (charts, waveforms, avatar stacks) is skipped.
 // Draws a panel (outside the region when the window has room) and numbered outlines;
@@ -347,9 +353,55 @@
   const unnamed = [],
     targets = [],
     controls = [];
+  // An inventory, not checks: the tells of an undesigned screen a script can see (references/slop.md),
+  // paddings and gaps off the 4px grid, and inner radii that do not nest in their painted box.
+  const slop = new Map(),
+    offGrid = new Map(),
+    nestedRadius = [];
+  const note = (m, key, el) => m.set(key, [key, (m.get(key)?.[1] || 0) + 1, m.get(key)?.[2] || sel(el)]);
+  const spread = (c) => {
+    const [r0, g0, b0] = (c.match(/[\d.]+/g) || [0, 0, 0]).map(Number);
+    return Math.max(r0, g0, b0) - Math.min(r0, g0, b0);
+  };
+  const colorsIn = (v) => v.match(/rgba?\([^)]*\)/g) || [];
+  const radiusOf = (cs, r) => Math.min(parseFloat(cs.borderTopLeftRadius) || 0, r.height / 2, r.width / 2);
   for (const el of all) {
     const r = el.getBoundingClientRect(),
       cs = getComputedStyle(el);
+    if (/gradient\(/.test(cs.backgroundImage) && new Set(colorsIn(cs.backgroundImage).filter((c) => spread(c) >= 40)).size >= 2) note(slop, "hue gradient on a surface", el);
+    if (/text/.test(cs.webkitBackgroundClip || cs.backgroundClip)) note(slop, "gradient text", el);
+    if (colorsIn(`${cs.boxShadow} ${cs.textShadow}`).some((c) => spread(c) >= 40 && !/,\s*0\)$/.test(c))) note(slop, "colored glow or shadow", el);
+    const ownText = [...el.childNodes]
+      .filter((t) => t.nodeType === 3)
+      .map((t) => t.textContent)
+      .join(" ")
+      .trim();
+    if (ownText) {
+      if (/\p{Extended_Pictographic}/u.test(ownText)) note(slop, "emoji in text", el);
+      if (cs.textTransform === "uppercase" && parseFloat(cs.letterSpacing) >= 0.05 * parseFloat(cs.fontSize)) note(slop, "uppercase tracked label", el);
+      if (Number(cs.fontWeight) >= 700 && (el.matches("h1, h2, h3, h4, h5, h6") || parseFloat(cs.fontSize) >= 20)) note(slop, "heading at weight 700 or more", el);
+      if (ownText.length <= 80 && /\S!(\s|$)/.test(ownText)) note(slop, "exclamation mark", el);
+      if (/\S\s[·•|]\s\S/.test(ownText)) note(slop, "dot or pipe between facts", el);
+      if (cs.fontStyle === "italic" && el.matches("em, i, span") && el.parentElement?.innerText.trim().length > ownText.length) note(slop, "italic emphasis", el);
+      if (el.matches("h1, h2, h3, h4, h5, h6") && /^(\d{1,2}|[IVX]+)[\s.):—–-]/.test(ownText)) note(slop, "numbered section heading", el);
+    }
+    const tight = r.height < 40 && (el.matches(BUTTON) || el.matches(CONTROL) || cs.display.startsWith("inline"));
+    for (const v of new Set([cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft, ...(/flex|grid/.test(cs.display) && el.children.length > 1 ? cs.gap.split(" ") : [])])) {
+      const n = parseFloat(v);
+      if (n > 2 && Number.isInteger(n) && n % 4 && !(tight && n % 2 === 0)) note(offGrid, v, el);
+    }
+    const ri = radiusOf(cs, r);
+    if (ri > 0 && (filled(cs) || lined(cs))) {
+      let p = el.parentElement;
+      while (p && p !== layer.parentElement && !((filled(getComputedStyle(p)) || lined(getComputedStyle(p))) && radiusOf(getComputedStyle(p), p.getBoundingClientRect()) > 0)) p = p.parentElement;
+      if (p && p !== layer.parentElement && nestedRadius.length < 20) {
+        const q = p.getBoundingClientRect(),
+          ro = radiusOf(getComputedStyle(p), q),
+          inset = Math.min(r.left - q.left, r.top - q.top);
+        const want = Math.max(ro - inset, 4);
+        if (inset >= 0 && inset < ro && ri > want + 1) nestedRadius.push(`${sel(el)} r${Math.round(ri)} in ${sel(p)} r${Math.round(ro)}, ${Math.round(inset)}px in: wants r${Math.round(want)}`);
+      }
+    }
     if (![...el.childNodes].some((t) => t.nodeType === 3 && /[\p{L}\p{N}]/u.test(t.textContent))) {
       // Not a text element: boxes, lines, shadows, gaps, icons, controls.
     } else {
@@ -792,11 +844,64 @@
         });
         return [...new Set(keyed.flatMap((m) => [...m.keys()]))].map((key) => ({ cells: keyed.map((m) => m.get(key)).filter(Boolean), box: els[0].parentElement }));
       }),
+    // A row of 3+ like cards (painted siblings of one kind side by side, about one width): each card's
+    // texts by kind and order are a column of row-mates.
+    ...parents.flatMap((p) =>
+      [
+        ...Map.groupBy(
+          [...p.children].filter((k) => visible(k) && !isData(k) && !rowEls.has(k) && paintedBox(k)),
+          kindOf,
+        ).values(),
+      ]
+        .filter((g) => {
+          const rs = g.map((k) => k.getBoundingClientRect());
+          return (
+            g.length >= 3 && rs.every((r, i) => !i || (r.left >= rs[i - 1].right - 1 && r.top < rs[i - 1].bottom)) && Math.min(...rs.map((r) => r.width)) >= Math.max(...rs.map((r) => r.width)) * 0.85
+          );
+        })
+        .flatMap((g) => {
+          const keyed = g.map((k) => {
+            const seen = new Map();
+            return new Map([...textEls].filter((t) => k.contains(t)).map((t) => [`${kindOf(t)}#${seen.set(kindOf(t), (seen.get(kindOf(t)) || 0) + 1).get(kindOf(t))}`, t]));
+          });
+          return [...new Set(keyed.flatMap((m) => [...m.keys()]))].map((key) => ({ cells: keyed.map((m) => m.get(key)).filter(Boolean), box: p, mates: true }));
+        }),
+    ),
   ];
+  // A value's format: letters a, digit runs 9, a sign dropped and a decimal merged ("+3.2 %" is "9 %").
+  const formatOf = (s) =>
+    s
+      .replace(/[+\-−–](?=\d)/g, "")
+      .replace(/\p{L}+/gu, "a")
+      .replace(/\d+/g, "9")
+      .replace(/(?<![.,9])9[.,]9(?![.,:]?9)/g, "9");
   const form = (l) => (l.link ? "links" : l.chip ? "chips" : "plain text");
-  for (const { cells, name, box, path } of cellCols) {
+  const odd5 = new Set(checks.filter((c) => c.kind === "sibling").map((c) => c.el)); // a card's first text, checked in 5
+  for (const { cells, name, box, path, mates } of cellCols) {
     const looks = cells.map(cellLook).filter(Boolean);
-    if (looks.length < 4) continue;
+    if (looks.length < (mates ? 3 : 4)) continue;
+    const where = name ? `column "${name}" of ${sel(box)}` : `their column in ${sel(box)}`;
+    // A value format a third of the column's values or fewer use, beside one on 60% or more: a second
+    // date format among dd.mm.yyyy. Values are short texts with a digit and at most one word; a card
+    // row's values differ in unit by design. Rewriting the value is data, so no `apply`.
+    const vals = mates ? [] : looks.filter((l) => /\d/.test(l.text) && l.text.length <= 24 && (l.text.match(/\p{L}+/gu) || []).length <= 1);
+    const fmts = [...Map.groupBy(vals, (l) => formatOf(l.text)).values()].sort((a, b) => b.length - a.length);
+    if (vals.length >= 4 && vals.length >= looks.length * 0.6 && fmts[0].length >= vals.length * 0.6)
+      for (const g of fmts.slice(1).filter((g) => g.length <= vals.length / 3)) {
+        const ex = fmts[0][0].text;
+        check({
+          kind: "sibling",
+          where: at(g[0].t),
+          text: textOf(g[0].t),
+          against: `${fmts[0].length} of ${vals.length} values in ${where} in the format of "${ex}"`,
+          off: g.length,
+          fix: `Write ${and(g.map((l) => `"${l.text}"`))} (${and(holders(g.map((l) => l.t)))}) in the format ${ex.replace(/\d/g, "9")}, as "${ex}"; ${g.length} of ${vals.length} values use another format where the other ${fmts[0].length} share this one.`,
+          count: g.length,
+          score: 0.5,
+          el: g[0].t,
+          apply: [],
+        });
+      }
     const groups = [...Map.groupBy(looks, (l) => `${l.shape}|${l.type}|${l.ink}`).values()].sort((a, b) => b.length - a.length);
     const major = groups[0],
       m = major[0],
@@ -807,11 +912,12 @@
         ocs = getComputedStyle(o.t);
       const same = g.some((l) => major.some((x) => x.text === l.text)),
         signal = o.ink && o.ink !== m.ink && chroma(flat(o.ink)) > 50; // red and bold: an alarm
-      if (g.length > looks.length / 3 || (o.shape === m.shape && o.link === m.link && !same && (o.type === m.type || signal))) continue;
+      if (g.length > looks.length / 3 || (o.shape === m.shape && o.link === m.link && !same && (o.type === m.type || signal)) || odd5.has(o.t)) continue;
       // The edit: the text's differing properties, and a chip's box cleared when the column is bare.
       const text = Object.fromEntries([
         ...(o.ink !== m.ink && m.ink ? [["color", m.ink]] : []),
         ...TYPE.filter((p) => ocs.getPropertyValue(p) !== mcs.getPropertyValue(p)).map((p) => [p, mcs.getPropertyValue(p)]),
+        ...(ocs.fontSize !== mcs.fontSize && ocs.lineHeight !== mcs.lineHeight ? [["line-height", mcs.lineHeight]] : []), // a size brings its line
       ]);
       const chipEdit =
         o.chip && !m.chip
@@ -827,11 +933,14 @@
         [g.map((l) => l.chip), chipEdit],
       ].filter(([els, d]) => els[0] && Object.keys(d).length);
       // A link among plain text (or the reverse) and a chip to add are markup: a recolor would hide links.
+      // Both are one deviation, a cell in another form than its column, unless it holds a placeholder.
       const linking = o.link !== m.link,
-        writable = !linking && !(m.chip && !o.chip) && edits.length;
+        chipping = !linking && !!m.chip && !o.chip,
+        writable = !linking && !chipping && edits.length,
+        unit = mates ? "row-mates" : "cells";
       const has = (d) => (e) => Object.entries(d).every(([k, v]) => (k === "color" ? hex(getComputedStyle(e).color) : getComputedStyle(e).getPropertyValue(k)) === v);
       const as = writable ? edits.map(([els, d]) => apply(els, d, has(d), [path && `${path} ${els[0].tagName.toLowerCase()}${firstClass(els[0])}`])) : [];
-      const say = (l) => (form(l) !== form(m) || l === m ? form(l) : `${getComputedStyle(l.t).fontSize}/${getComputedStyle(l.t).fontWeight}${l.ink ? ` ${l.ink}` : ""}${l.chip ? ` ${l.shape}` : ""}`);
+      const say = (l, x) => (form(l) !== form(x) ? form(l) : `${getComputedStyle(l.t).fontSize}/${getComputedStyle(l.t).fontWeight}${l.ink ? ` ${l.ink}` : ""}${l.chip ? ` ${l.shape}` : ""}`);
       const decl = edits
         .map(([, d]) =>
           Object.entries(d)
@@ -843,15 +952,17 @@
         kind: "sibling",
         where: at(o.t),
         text: textOf(o.t),
-        against: `${major.length} of ${looks.length} cells in ${name ? `column "${name}" of ` : "their column in "}${sel(box)} as ${say(m)}, e.g. "${m.text.slice(0, 24)}"`,
+        against: `${major.length} of ${looks.length} ${unit} in ${mates ? `${sel(box)} (${and(holders(major.map((l) => l.t)))})` : where} as ${say(m, o)}, e.g. "${m.text.slice(0, 24)}"`,
         off: +(parseFloat(ocs.fontSize) - parseFloat(mcs.fontSize)).toFixed(2),
         fix: linking
           ? `Link every ${name ? `${name} cell` : "cell in this column"}, or none; ${g.length} of ${looks.length} are ${form(o)} (${and(holders(g.map((l) => l.t)))}) where the other ${major.length} are ${form(m)}.`
           : writable
-            ? `Set ${decl} on ${and(exactNames(texts, has(text)))}; ${g.length} of ${looks.length} cells render as ${say(o)} where the other ${major.length} are ${say(m)}.${as.every(Boolean) ? "" : miss(g.map((l) => l.t))}`
-            : `Render ${and(holders(g.map((l) => l.t)))} as ${form(m)} like the other ${major.length} cells.`,
+            ? `Set ${decl} on ${and(exactNames(texts, has(text)))}; ${g.length} of ${looks.length} ${unit} render as ${say(o, m)} where the other ${major.length} are ${say(m, o)}.${as.every(Boolean) ? "" : miss(g.map((l) => l.t))}`
+            : chipping
+              ? `Show every ${name ? `${name} cell` : "cell in this column"} as a chip; ${and(g.map((l) => `"${l.text.slice(0, 24)}"`))} (${and(holders(g.map((l) => l.t)))}) ${g.length > 1 ? "are" : "is"} ${form(o)} where the other ${major.length} are chips.`
+              : `Render ${and(holders(g.map((l) => l.t)))} as ${form(m)} like the other ${major.length} ${unit}.`,
         count: g.length,
-        score: linking ? 0.6 : !writable ? 0.45 : o.shape !== m.shape || ocs.fontSize !== mcs.fontSize ? 0.6 : 0.5,
+        score: (linking || chipping) && !/^([-–—]|n\/?a)$/i.test(o.text) ? 0.6 : !writable ? 0.45 : o.shape !== m.shape || ocs.fontSize !== mcs.fontSize ? 0.6 : 0.5,
         el: o.t,
         apply: as.every(Boolean) ? as.flat() : [],
       });
@@ -995,6 +1106,9 @@
     offTokenValues,
     unnamed: unnamed.slice(0, 20),
     smallTargets: small.slice(0, 20),
+    slop: [...slop.values()],
+    offGrid: [...offGrid.values()].sort((a, b) => b[1] - a[1]),
+    nestedRadius,
     rows,
     cards: cardList.slice(0, 20),
     text,

@@ -1,6 +1,6 @@
 # Bench
 
-A fixed regression set for the redline skill: three HTML fixtures rebuilt from real screens, with their known defects in [ground-truth.md](ground-truth.md), one fixed fixture, two click dummies (`recorder.html`, `cmms.html`), `scope.html` (two list headings that share one name, as on Antasar's Systems screen), and `row.html` (four KPI cards, one title wraps and pushes its number down), which hold the fix cases. It lives outside the skill, so an installed skill does not carry it. Rerun it after a change to the skill or its scripts.
+A fixed regression set for the redline skill: three HTML fixtures rebuilt from real screens, with their known defects in [ground-truth.md](ground-truth.md), one fixed fixture, two click dummies (`recorder.html`, `cmms.html`), `scope.html` (two list headings that share one name, as on Antasar's Systems screen), `row.html` (four KPI cards, one title wraps and pushes its number down), which hold the fix cases, `seeded.html` (a portfolio review with eight seeded defects, listed in ground-truth.md), and `cmms-cut.html` (a CMMS screen whose date is cut short, which `view.js` must flag). It lives outside the skill, so an installed skill does not carry it. Rerun it after a change to the skill or its scripts.
 
 ## Scripts
 
@@ -33,7 +33,7 @@ A run on a screen you consider clean shows the false positives: every signal the
 
 ## Fix check
 
-`node bench/check-cases.mjs` runs `measure.sh --try` on 50 fixes on the two click dummies, `scope.html`, and `row.html` and compares each verdict. The printed fixes pass, the printed fix inside an `@media` rule passes, and the scope fixture's fix matches only its one heading. Wrong variants fail: half edits, clips (overflow, `contain`, `clip-path`), a fixed height that spills, smaller, tighter, small-caps, condensed, or `scaleX` type, a fit that holds at 1440 only, a table shoved past its card, a chart line moved or hidden, a hidden mover, a transform, a selector that reaches a sibling, a covering `::after` above or below the fold, invisible first lines, a hidden placeholder, a drifting inner paragraph, an unrelated gap that shrinks, a filter, a blend mode, a blurred region, and a media rule that blanks the page at 1280. A markup fix is refused, and a note under 0.5 never passes. A case number runs one case: `node bench/check-cases.mjs 8`.
+`node bench/check-cases.mjs` runs `measure.sh --try` on 50 fixes on the two click dummies, `scope.html`, and `row.html` and compares each verdict. The printed fixes print CLEAN, the printed fix inside an `@media` rule prints CLEAN, and the scope fixture's fix matches only its one heading. Wrong variants fail: half edits, clips (overflow, `contain`, `clip-path`), a fixed height that spills, smaller, tighter, small-caps, condensed, or `scaleX` type, a fit that holds at 1440 only, a table shoved past its card, a chart line moved or hidden, a hidden mover, a transform, a selector that reaches a sibling, a covering `::after` above or below the fold, invisible first lines, a hidden placeholder, a drifting inner paragraph, an unrelated gap that shrinks, a filter, a blend mode, a blurred region, and a media rule that blanks the page at 1280. A markup fix is refused, and a note under 0.5 never prints CLEAN. A case number runs one case: `node bench/check-cases.mjs 8`.
 
 ## The whole skill
 

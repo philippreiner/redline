@@ -26,12 +26,17 @@ The best label is the one the screen does without; the next best is short, plain
 - The shortest unambiguous label in place: a menu on an object implies the object ("Rename", "Delete"). Keep the noun when siblings differ by object, in confirmation titles, and on destructive buttons.
 - Values describe themselves: "3 open tasks", not "Open: 3".
 - The thing first, and its parent after it as a separate, quieter label such as a chip or muted text: "Weekly review" with "Finance" beside it, not one string joined by a dot or an arrow.
+- No dots, bullets, or pipes as separators between facts ("3 open · Due Friday · Finance"): give each fact its own label, place, or line, or keep only the one that matters.
+- No italics for emphasis, no section numbers ("01 Overview"), and no labels that read like code (paths, `snake_case`, mono breadcrumbs).
 - Toggles name the on state. An ellipsis means more input follows ("Export as…").
 - Sentence case, no period on a single sentence, no emoji.
 
 ## Helpers, tone, and states
 
 - Talk about the user's work, not the screen ("Here you can…") or the product.
+- A title names the context, the page or the period, never a greeting ("Welcome back!"). No exclamation marks.
+- A change names what it compares to: "+12% vs last month", not "+12%".
+- A claim the product cannot back (users, speed, ratings) is checked with the owner, then said quietly and specifically, or cut.
 - A label that needs a tooltip gets renamed; a tooltip defines a term.
 - A placeholder shows an example or the default, never a state or an instruction.
 - A new concept gets one explanation, where it is first met, as what happens for the user.
