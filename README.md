@@ -1,65 +1,64 @@
 # redline
 
-Your coding agent builds screens it never looks at. redline makes it look. The agent measures the open page and sees guide lines where things should line up. Each defect comes numbered with its CSS fix, and the agent tests that fix on the page before it touches the code.
+Coding agents build UI they never look at. redline lets them look. It gives the agent scripts that measure the screen in the browser, like a visual linter, plus design instructions for building better interfaces.
+
+The result: screens that are aligned, balanced, and consistent.
+
+## Install
 
 ```sh
 npx skills add philippreiner/redline
 ```
 
-## One pass takes a shell from 20 checks to none
+Then ask your agent to design, review, or polish a screen. The skill loads for any UI work, small tweaks included.
 
-One four-pane app shell, before and after a pass with the skill. Pink lines mark edges that three or more things share; a red or orange box marks something 1 to 8px off one, with its offset.
+## Example
 
-| Before: 20 checks | After: none |
+An app shell before and after one pass. Pink lines are shared edges; a red or orange box is something a few pixels off.
+
+| Before | After |
 | --- | --- |
-| ![Redline overlay on the shell before](docs/shell-before.png) | ![Redline overlay on the shell after](docs/shell-after.png) |
+| ![The app shell before](docs/example-before.png) | ![The app shell after](docs/example-after.png) |
 
-Alignment fixes:
+Before:
 
-- Pane headers at 36, 40, and 44px now share one 40px band.
-- Nav indents, times, and badges sit on their columns and right edges.
-- A pill button among 6px-radius ones now takes their shape.
-- The status chip and the button beside it share one 28px height.
+- Pane headers at three different heights
+- A button centered while everything around it is left-aligned
+- Indents, times, and badges a few pixels off
+- A section title as big as the page title
+- "Actions 3" above "No actions due this week"
 
-Hierarchy fixes, which a clean alignment run alone would have missed:
+After:
 
-- The section title "Wave 2 readiness" was as large as the page title, and a 40px figure competed with both. Now the page title leads, and the sections sit one step below it.
-- The page now opens with what needs the reader: workstreams sorted worst first, each with a health mark and its word.
-- "Actions 3" sat above "No actions due this week". The actions now show as rows, with one "Add action" at the end; "+ Event" moved to the Schedule tab.
-- The Files pane kept search in its header and "Add files" in its body. Both now sit in the header.
-- Checkbox squares sat in front of things nobody can check. They are now object icons.
-
-## The agent measures before it styles
-
-1. Measure the screen as it is, so every change has a baseline.
-2. Write the skeleton before styling anything: frame, regions, header bands, the edges content starts on, one axis per region, and what leads.
-3. Fix region by region, layout before parts, and try each CSS fix on the page (`measure.sh --try`) before it goes into the code.
-4. Hand over before and after, with the numbers that moved.
-
-A project's own design rules, such as a `DESIGN.md`, are the defaults. Where one makes a screen worse, the agent does the better thing and names the rule it bent.
+- One header height, everything on its lines
+- The page title leads, sections sit one step below
+- The workstreams that need attention come first
+- Actions as a list, with one "Add action" at the end
 
 ## What's inside
 
 | Path | Holds |
 | --- | --- |
-| `skills/redline/SKILL.md` | The workflow: baseline, skeleton, parts, the modes (explore, consistency pass, new feature, rework, review), and a critic |
+| `skills/redline/SKILL.md` | How the agent works: measure first, sketch the layout, then fix region by region. Modes for new screens, reviews, and reworks |
 | `skills/redline/references/` | Nine checklists (structure, foundations, components, layout, hierarchy, detail, alignment, words, polish), a pattern library, and click dummies |
-| `skills/redline/scripts/` | `redline.js` for edges, pane bands, axes, and indents; `count.js` for shapes, text volume, type rank, action placement, contradictions, contrast, and the style inventory; `view.js` for spacing, wireframe, and stress views; `measure.sh` to run all three and rank the checks |
-| `bench/` | Screens with known defects, clean screens that must stay quiet, and 87 fix cases; not installed with the skill |
+| `skills/redline/scripts/` | `redline.js` for alignment (edges, pane headers, indents), `count.js` for consistency (sizes, colors, shapes, amount of text, hierarchy, contrast), `view.js` for wireframe, spacing, and stress views, and `measure.sh` to run all three and list what to fix |
+| `bench/` | Test screens with known defects, to check the scripts after a change. Not installed |
 
-## The scripts run in any browser
+## Run the scripts
 
-`measure.sh` needs [agent-browser](https://www.npmjs.com/package/agent-browser) and node. It measures the page already open in the agent's browser session, so a signed-in app stays signed in:
+The three scripts are plain JavaScript that runs in any page: paste one into the DevTools console, or run it with Playwright, Puppeteer, or agent-browser. Each draws an overlay and returns JSON.
+
+`measure.sh` runs all three at once. It needs [agent-browser](https://www.npmjs.com/package/agent-browser) and node, and measures the page open in the agent's browser:
 
 ```sh
-scripts/measure.sh before main      # rank the checks, then look at the images
-scripts/measure.sh --try before 1   # try check 1's fix on the page
+scripts/measure.sh before main      # what to fix, plus images
+scripts/measure.sh --try before 1   # test fix 1 on the page first
 # change the code
 scripts/measure.sh after main
 scripts/measure.sh --compare before after
 ```
 
-In a click dummy, `<script src=".../redline.js"></script>` keeps the overlay live; Alt+R toggles it.
+In a click dummy, add `<script src=".../redline.js"></script>` to keep the lines on; Alt+R toggles them.
 
 ## License
 
