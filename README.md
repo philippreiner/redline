@@ -19,6 +19,7 @@ Alignment fixes:
 - Pane headers at 36, 40, and 44px now share one 40px band.
 - Nav indents, times, and badges sit on their columns and right edges.
 - A pill button among 6px-radius ones now takes their shape.
+- The status chip and the button beside it share one 28px height.
 
 Hierarchy fixes, which a clean alignment run alone would have missed:
 

@@ -13,7 +13,8 @@
 //             value that is no link (an overdue date) are designed and stay quiet. Links among plain
 //             text and plain text among chips are one markup fix (link every cell or none, chip every
 //             cell) at 0.6, with no `apply`; a placeholder ("–") among chips stays a note.
-//   control   controls in one group (the nearest box holding two or more) whose heights differ by 1 to 4px.
+//   control   controls in one group (the nearest box holding two or more) whose heights differ by 1 to 4px;
+//             in a header or toolbar, a chip 1 to 8px off the controls on its line.
 //   contrast  text under WCAG AA (4.5, or 3 for 24px or 18.66px bold text) against its painted
 //             background, its and its ancestors' opacity multiplied into the ink; one check per text
 //             color naming every holder, led by one in view (faded text: one per element holding the
@@ -520,7 +521,7 @@
       );
       // A painted control shows its height; a chip is a small painted run of text that is not a button.
       if ((fill || line) && (kind === "controls" || el.innerText.trim()) && !el.matches(STATE)) controls.push({ el, kind: "control", r, cs });
-    } else if (fill && r.height < 32 && el.innerText?.trim() && cs.display.startsWith("inline") && !el.closest(BUTTON) && el.children.length <= 2) controls.push({ el, kind: "chip", r, cs });
+    } else if (fill && r.height < 32 && el.innerText?.trim() && (cs.display.startsWith("inline") || el.closest('header, [role="toolbar"], [class*="toolbar"]')) && !el.closest(BUTTON) && el.children.length <= 2) controls.push({ el, kind: "chip", r, cs });
     if (kind || el.matches("a[href]")) {
       const label = el.labels?.length || (el.id && document.querySelector(`label[for="${CSS.escape(el.id)}"]`)) || el.closest("label");
       const name =
@@ -582,10 +583,13 @@
   // from their row's commonest. A control's row is the controls of its kind that overlap it vertically
   // inside the nearest box, up to three levels up, holding one: a toolbar, a segmented control, a
   // pager, a dialog footer. On a tie the height most controls of that kind use on the layer wins.
+  // In a bar (a header or toolbar) a chip on one line with controls takes their height, up to 8px off.
   const tall = (c) => Math.round(c.r.height);
+  const bar = (el) => el.closest('header, [role="toolbar"], [class*="toolbar"]');
+  const mixed = (c, o) => c.kind === "chip" && o.kind === "control" && bar(c.el) && bar(c.el) === bar(o.el);
   const peersOf = (c) => {
     for (let n = c.el.parentElement, d = 0; n && d < 3; n = n.parentElement, d++) {
-      const ps = controls.filter((o) => o !== c && o.kind === c.kind && n.contains(o.el) && o.r.top < c.r.bottom && c.r.top < o.r.bottom);
+      const ps = controls.filter((o) => o !== c && (o.kind === c.kind || mixed(c, o)) && n.contains(o.el) && o.r.top < c.r.bottom && c.r.top < o.r.bottom);
       if (ps.length) return [n, ps];
       if (n === layer) break;
     }
@@ -596,8 +600,9 @@
   for (const c of controls) {
     const [g, ps] = peersOf(c);
     if (!g) continue;
-    const [rh, rg] = [...Map.groupBy([c, ...ps], tall)].sort((a, b) => b[1].length - a[1].length || usual(c, b[0]) - usual(c, a[0]))[0];
-    if (tall(c) === rh || Math.abs(tall(c) - rh) > 4) continue;
+    const across = ps.some((o) => o.kind !== c.kind);
+    const [rh, rg] = [...Map.groupBy(across ? ps.filter((o) => o.kind !== c.kind) : [c, ...ps], tall)].sort((a, b) => b[1].length - a[1].length || usual(c, b[0]) - usual(c, a[0]))[0];
+    if (tall(c) === rh || Math.abs(tall(c) - rh) > (across ? 8 : 4)) continue;
     const k = `${sel(g)}|${tall(c)}`;
     if (!odd.has(k)) odd.set(k, { c, g, rh, ref: rg[0], n: rg.length, els: [] });
     odd.get(k).els.push(c.el);

@@ -65,7 +65,7 @@ Is the screen crowded or inconsistent? A floating panel lists the checks by numb
 | --- | --- |
 | `contrast` | Text under WCAG AA against its painted background, one check per text color, every holder named; always 0.5 or more |
 | `sibling` | One of three or more siblings of one kind (tag and class) styled differently: fill, border, padding, first text. Also a few cells unlike the rest of their column, in a table or four or more repeated rows: a link among plain text, a chip among bare text, a value in another format ("Nov 21" among "14.11.2026", no `apply`). In a row of three or more like cards, a text whose size, weight, or color differs from its row-mates', with their values as the `apply`. Hue alone is designed (status chips, a red overdue date) |
-| `control` | Controls in one group whose heights differ by 1 to 4px |
+| `control` | Controls in one group whose heights differ by 1 to 4px; in a header or toolbar, a chip 1 to 8px off the controls on its line |
 | `crowding` | One action label on four or more buttons in a column; a note under 0.5 |
 | `shape` | Painted controls of one role (buttons, icon buttons, inputs and selects, tags, badges and dots) in one region (a card, header, form, toolbar, or the controls on one line) that mix square, rounded, and capsule; the odd ones take the region's commonest radius. A rounded radius 2px or more off it is a note |
 | `square` | An icon-only button whose width and height differ by 1 to 8px; the smaller side takes the larger. Unpainted, it prints only beside square ones of its kind |

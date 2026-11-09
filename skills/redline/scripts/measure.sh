@@ -388,7 +388,7 @@ node - "$out" "$region" "$(agent-browser get url)" <<'EOF'
 const fs = require("node:fs");
 const path = require("node:path");
 const [out, region, url] = process.argv.slice(2);
-const family = { rhythm: "layout", "dead-zone": "layout", collision: "layout", break: "layout", band: "layout", volume: "composition", large: "composition", sibling: "composition", crowding: "composition", shape: "composition", edge: "alignment", baseline: "alignment", inset: "alignment", axis: "alignment", indent: "alignment", control: "tokens", square: "tokens", contrast: "tokens" };
+const family = { rhythm: "layout", "dead-zone": "layout", collision: "layout", break: "layout", band: "layout", placement: "layout", volume: "composition", rank: "composition", contradiction: "composition", repeat: "composition", large: "composition", sibling: "composition", crowding: "composition", shape: "composition", edge: "alignment", baseline: "alignment", inset: "alignment", axis: "alignment", indent: "alignment", control: "tokens", square: "tokens", contrast: "tokens" };
 const weight = { layout: 1, composition: 0.9, alignment: 0.85, tokens: 0.7 };
 const read = (f) => { try { return JSON.parse(fs.readFileSync(path.join(out, f), "utf8")); } catch { return {}; } };
 const found = ["redline", "count", "view-bands"].flatMap((tool) =>

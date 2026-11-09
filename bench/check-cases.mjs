@@ -23,6 +23,7 @@ const screens = {
   controls: ["controls.html", "#seeded"],
   shell: ["shell.html", ".app"],
   hierarchy: ["hierarchy.html", "#seeded"],
+  "shell-chip": ["shell-chip.html", ".app"],
 };
 
 // [screen, check kind ("note": the first check under 0.5 with an apply), its text starts
@@ -144,6 +145,8 @@ const cases = [
   ["shell", "edge", "Mon", null, "CLEAN", "printed: the late time's padding"],
   ["shell", "edge", "4", null, "CLEAN", "printed: the Inbox badge's margin"],
   ["hierarchy", "rank", "Wave 2 readiness", null, "CLEAN", "printed: the section title one step below the page title"],
+  ["shell-chip", "control", "Active", null, "CLEAN", "printed: the status chip at the height of the button beside it"],
+  ["shell-chip", "control", "Active", "header.head > span.chip { transform: scaleY(1.27) }", "FAIL", "a transform"],
 ];
 
 const session = process.env.AGENT_BROWSER_SESSION || "check-cases";
