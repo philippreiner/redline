@@ -1,11 +1,15 @@
 # redline
 
-redline is a visual linter for coding agents. With it, an agent makes UI screens that are aligned, balanced, and consistent.
+redline is a visual linter for coding agents.
 
-The skill has two parts:
+**Why.** Coding agents write UI code, but they do not look at the result. Small defects stay on the screen: items off their lines, buttons with different heights, and titles with the wrong size.
+
+**What.** redline gives the agent two tools:
 
 - Scripts that measure a page in the browser. They show each defect on the page and give the fix.
 - Design rules. The agent uses them when it makes or changes a screen.
+
+**How.** The agent opens the page and runs the scripts. It fixes the defects, then measures again. The result is a screen that is aligned, balanced, and consistent.
 
 ## Install
 
