@@ -1,6 +1,6 @@
 # Bench
 
-A fixed regression set for the redline skill: three HTML fixtures rebuilt from real screens, with their known defects in [ground-truth.md](ground-truth.md), one fixed fixture, two click dummies (`recorder.html`, `cmms.html`), `scope.html` (two list headings that share one name, as on Antasar's Systems screen), `row.html` (four KPI cards, one title wraps and pushes its number down), which hold the fix cases, `seeded.html` (a portfolio review with eight seeded defects, listed in ground-truth.md), and `cmms-cut.html` (a CMMS screen whose date is cut short, which `view.js` must flag). `shell.html` (a four-pane app shell with seeded alignment defects) and `sidebar.html` (a clean Linear-like sidebar, which must stay quiet) hold the shell checks, and `controls.html` (seeded shape, square, volume, and lead defects beside a clean twin) the count checks. It lives outside the skill, so an installed skill does not carry it. Rerun it after a change to the skill or its scripts.
+A fixed regression set for the redline skill: three HTML fixtures rebuilt from real screens, with their known defects in [ground-truth.md](ground-truth.md), one fixed fixture, two click dummies (`recorder.html`, `cmms.html`), `scope.html` (two list headings that share one name, as on Antasar's Systems screen), `row.html` (four KPI cards, one title wraps and pushes its number down), which hold the fix cases, `seeded.html` (a portfolio review with eight seeded defects, listed in ground-truth.md), and `cmms-cut.html` (a CMMS screen whose date is cut short, which `view.js` must flag). `shell.html` (a four-pane app shell with seeded alignment defects) and `sidebar.html` (a clean Linear-like sidebar, which must stay quiet) hold the shell checks, `shell-after.html` (the shell with every defect fixed, the README's after image) must stay quiet, and `controls.html` (seeded shape, square, volume, and lead defects beside a clean twin) the count checks. It lives outside the skill, so an installed skill does not carry it. Rerun it after a change to the skill or its scripts.
 
 ## Scripts
 
@@ -15,6 +15,8 @@ $s --url bench/sources-after.html /tmp/bench/sources-after .app
 $s --compare /tmp/bench/sources /tmp/bench/sources-after
 $s --url bench/shell.html /tmp/bench/shell .app
 $s --url bench/sidebar.html /tmp/bench/sidebar .app
+$s --url bench/shell-after.html /tmp/bench/shell-after .app
+$s --compare /tmp/bench/shell /tmp/bench/shell-after
 $s --url bench/controls.html /tmp/bench/controls '#seeded'
 $s /tmp/bench/controls-clean '#clean'
 ```
@@ -32,6 +34,7 @@ $s /tmp/bench/controls-clean '#clean'
 | meeting-rail | `view-long.json` `after.overlaps` | `3`: two labels running under their values, and Workstreams under its chip's icon |
 | shell | `redline.json` `checks` | `band` x2 on the 36 and 44px pane headers; `axis` on `button.event`; `indent` x3 on `div.fin` (+4) and on `a.reports` (-4); `inset` on `div.fbody` (-4); `edge` on the times "Fri" (-5) and "Mon" (-3) and the badges "7" (-4) and "4" (-2); all at 0.5 or more |
 | sidebar | `redline.json` `checks` | none at 0.5 or more |
+| shell-after | all checks | none at 0.5 or more; `--compare` from shell lists 12 gone |
 | controls `#seeded` | `count.json` `checks` | `shape` on the toolbar pill, the form's square select, the card's square Share, and the capsule tag; `square` on More actions 28x24; `volume` on `ul > li.update` (median 4 lines) and on `section.kpi > p.help`; `large` with 4 leads |
 | controls `#seeded` | `count.json` `icons`, `text.volume` | `16x14 stroke 2.0 not square`; `eyebrows.count` 1, `helpers.count` 1 |
 | controls `#clean` | `count.json` `checks` | none |
