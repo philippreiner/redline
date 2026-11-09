@@ -8,10 +8,20 @@
 
 ## One thing leads
 
-- Quiet the neighbors before making the lead louder; add size or color last.
+- Quiet the neighbors before making the lead louder. Emphasis climbs from the cheapest means: position (first, top left, alone), then size, weight, ink, color, and last a mark or a box.
+- Each region has one focal point; a screen has at most two large elements (a title, a key figure) and three ink levels. A row of like figures counts as one. `count.js` `large` lists the competitors.
+- A new element takes the place of one or moves behind a click (a menu, the detail, a hover card). Adding comes after quieting, moving, and cutting.
 - A setup card the screen needs before it can work may lead until it is done.
 - `view.js` `lead`: in the blur, leader A is the thing the user came for, and decoration (dashed) leads nothing.
 - `view.js` `notext`: with the text erased, the structure still shows what leads and what groups.
+
+## Text volume
+
+Too much text is the miss users name most, and no alignment repairs it. Settle it before spacing and type.
+
+- A row carries one lead, one value, and one mark; a second line only where it tells rows apart. A card or section head carries its title and no helper sentence.
+- Previews, explanations, and metadata move to the detail or a hover card, or go. A label the layout already says ("Status:", "Owner:") goes.
+- `count.js` `volume` lists rows over two lines or two text styles, helper sentences, and eyebrows, and `text.volume` the words per region.
 
 ## Groups
 
@@ -46,5 +56,6 @@
 | Number | Target |
 | --- | --- |
 | `view.js` `lead`, leader A | The thing the user came for |
+| `count.js` `volume`, `large` checks at 0.5 or more | None |
 | `count.js` `text.nothing` | Empty, besides one empty state or setup card |
 | `count.js` `text.repeats` | No label repeated down a list where one action would do |

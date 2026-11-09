@@ -20,6 +20,8 @@ const screens = {
   row: ["row.html", "main"],
   seeded: ["seeded.html", "main"],
   "cmms-cut": ["cmms-cut.html#asset", "main"],
+  controls: ["controls.html", "#seeded"],
+  shell: ["shell.html", ".app"],
 };
 
 // [screen, check kind ("note": the first check under 0.5 with an apply), its text starts
@@ -117,6 +119,29 @@ const cases = [
   ["cmms-cut", "break", "24 Sep", null, "CLEAN", "printed: the date column 4px wider"],
   ["cmms-cut", "break", "24 Sep", "section.card:nth-child(3) > table.roomy tbody tr:nth-child(3) td:first-child { font-size: 12px }", "FAIL", "shrinks the date to fit"],
   ["cmms-cut", "break", "24 Sep", "section.card:nth-child(3) > table.roomy tbody tr:nth-child(3) td:first-child { letter-spacing: -0.4px }", "FAIL", "tightens the date to fit"],
+  ["controls", "shape", "New workstream", null, "CLEAN", "printed: the pill takes the toolbar's 6px radius"],
+  ["controls", "shape", "ERP migration", null, "CLEAN", "printed: the square select takes the form's 6px radius"],
+  ["controls", "shape", "Share", null, "CLEAN", "printed: the square button takes the card's 6px radius"],
+  ["controls", "shape", "WMS cutover", null, "CLEAN", "printed: the capsule tag takes the list's 4px radius"],
+  ["controls", "square", "More actions", null, "CLEAN", "printed: the 28x24 icon button 28px tall"],
+  ["controls", "shape", "New workstream", "div.toolbar > button.pill { border-radius: 3px }", "FAIL", "half fix: rounded, but not the toolbar's 6px"],
+  ["controls", "shape", "New workstream", "section#seeded div.toolbar > button { border-radius: 999px }", "FAIL", "the other way: every toolbar button turns into a pill"],
+  ["controls", "shape", "New workstream", "div.toolbar > button.pill { clip-path: inset(0 round 6px) }", "FAIL", "a clip looks rounded, the radius stays"],
+  ["controls", "square", "More actions", "div.toolbar > button.short { height: 26px }", "FAIL", "half edit: 28x26 is still not square"],
+  ["controls", "square", "More actions", "div.toolbar > button.short { transform: scaleY(1.17) }", "FAIL", "a transform stretches the icon"],
+  ["controls", "volume", "Carrier", null, "NOAPPLY", "rows that carry a preview: markup and words"],
+  ["controls", "large", "Cloud", null, "NOAPPLY", "four leads: markup"],
+  ["shell", "band", "Chats", null, "CLEAN", "printed: odd pane headers at the majority height"],
+  ["shell", "band", "Chats", "section.list > header.head { height: 40px }", "FAIL", "half edit: the detail header stays 44px"],
+  ["shell", "axis", "Event", null, "CLEAN", "printed: the centred button back on the column's start"],
+  ["shell", "axis", "Event", "div.stack > button.event { transform: translateX(-255px) }", "FAIL", "a transform"],
+  ["shell", "indent", "Finance close", null, "CLEAN", "printed: the odd group's indent step"],
+  ["shell", "indent", "Reports", null, "CLEAN", "printed: the outdented item's padding"],
+  ["shell", "indent", "Reports", "nav.nav > a.reports { transform: translateX(4px) }", "FAIL", "a transform"],
+  ["shell", "inset", "icon 16", null, "CLEAN", "printed: the odd pane's padding-inline"],
+  ["shell", "inset", "icon 16", "section.files > div.fbody { padding-left: 16px }", "FAIL", "half edit: the right inset stays 12px"],
+  ["shell", "edge", "Mon", null, "CLEAN", "printed: the late time's padding"],
+  ["shell", "edge", "4", null, "CLEAN", "printed: the Inbox badge's margin"],
 ];
 
 const session = process.env.AGENT_BROWSER_SESSION || "check-cases";

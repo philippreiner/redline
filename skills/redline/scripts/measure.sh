@@ -86,6 +86,9 @@ ab set viewport "${WIDTH:-1440}" "${HEIGHT:-900}"
 if [ "$url" != "-" ]; then ab open "$url"; fi
 case "$(agent-browser get url)" in about:blank | "") echo "No open page in agent-browser session '$session'; pass --url." >&2; exit 1 ;; esac
 ab wait 300
+if [ "$(agent-browser eval '/(^|\/)((log|sign)[-_]?in|auth)(\/|$)/i.test(location.pathname) || !!document.querySelector("input[type=password]")')" = "true" ]; then
+  echo "The page looks signed out ($(agent-browser get url)): sign in in session '$session' and measure the screen you change." >&2
+fi
 layer="window.__axesLayer = undefined;"
 if [ -n "$region" ]; then
   layer="window.__axesLayer = $(node -e 'process.stdout.write(JSON.stringify(process.argv[1]))' "$region");"
@@ -149,7 +152,7 @@ if [ -n "$try" ]; then
   // Computed style, by role: the properties a fix may change on the holders, inside them, and on
   // their ancestors. Geometry (sizes, insets, grid tracks) is the place rule's job.
   const longhands = (p, v) => { const st = document.createElement("div").style; st.setProperty(p, v); return [...st].length ? [...st] : [p]; };
-  const base = (p) => p.replace(/-(inline|block)(-(start|end))?$|-(left|right|top|bottom)$/, "");
+  const base = (p) => p.replace(/-(inline|block)(-(start|end))?$|-(left|right|top|bottom)$/, "").replace(/^border-(top|bottom|start|end)-(left|right|start|end)-radius$/, "border-radius");
   const printed = new Set(window.__tryApply.flatMap((a) => longhands(a.property, a.value)).map(base));
   const layout = /^(padding|margin|gap|row-gap|column-gap|align-|justify-|place-|flex|order|grid-(row|column|area|auto-flow)|(min|max)-(width|height|inline-size|block-size)|box-sizing|display|white-space|text-wrap|overflow-wrap|word-wrap|word-break|hyphens|vertical-align)/;
   // Layout properties that inherit: inside a holder they follow it.
@@ -385,7 +388,7 @@ node - "$out" "$region" "$(agent-browser get url)" <<'EOF'
 const fs = require("node:fs");
 const path = require("node:path");
 const [out, region, url] = process.argv.slice(2);
-const family = { rhythm: "layout", "dead-zone": "layout", collision: "layout", break: "layout", sibling: "composition", crowding: "composition", edge: "alignment", baseline: "alignment", inset: "alignment", control: "tokens", contrast: "tokens" };
+const family = { rhythm: "layout", "dead-zone": "layout", collision: "layout", break: "layout", band: "layout", volume: "composition", large: "composition", sibling: "composition", crowding: "composition", shape: "composition", edge: "alignment", baseline: "alignment", inset: "alignment", axis: "alignment", indent: "alignment", control: "tokens", square: "tokens", contrast: "tokens" };
 const weight = { layout: 1, composition: 0.9, alignment: 0.85, tokens: 0.7 };
 const read = (f) => { try { return JSON.parse(fs.readFileSync(path.join(out, f), "utf8")); } catch { return {}; } };
 const found = ["redline", "count", "view-bands"].flatMap((tool) =>

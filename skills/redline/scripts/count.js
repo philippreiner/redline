@@ -1,7 +1,7 @@
 // Count: is the screen crowded or inconsistent? One count of the layer (window.__axesLayer, else
 // the last open dialog or sheet, else main, else the body). It returns `checks`, the minimum checks
 // (the floor of a review, not the review; ranked, at most 20, numbered on the page and in the panel),
-// of four kinds:
+// of eight kinds:
 //   crowding  one action label on 4+ buttons in a column (a note, under 0.5).
 //   sibling   one of 4+ sibling containers of one kind (tag and first class) differs from the rest in
 //             fill or border, padding, or first-text style; or a few cells of one column in a table or
@@ -19,6 +19,37 @@
 //             color naming every holder, led by one in view (faded text: one per element holding the
 //             fade); every fail scores 0.5 or more. Text under a running opacity animation is skipped.
 //             An ink set per holder (inline, as speaker names) is a markup fix: darken each, no `apply`.
+//   shape     painted controls of one role in one region that mix shape classes: square (radius at
+//             most 1px), rounded, capsule (radius at least half the shorter side minus 1). Roles:
+//             buttons with text, icon-only buttons, inputs and selects (a field drawn by its wrapper
+//             takes the wrapper's shape), tags (small painted text that is no control), and badges
+//             (up to three characters, or a dot up to 12px). Selected and attached controls (a
+//             button group with joined corners) are skipped. A region is the nearest painted box,
+//             header, footer, form, fieldset, nav, dialog, or toolbar, group, search, menu, or tablist
+//             role inside the column, else the controls side by side on one line. The odd ones take
+//             the region's commonest class (a tie goes to the class the role uses most on the layer)
+//             at its commonest radius: 0.6, or 0.55 on a tie. A rounded radius 2px or more off the
+//             region's commonest is a note (0.4). One check per odd holder and radius, `count` folds
+//             repeats.
+//   square    an icon-only button (no text, one icon up to 32px) whose width and height differ by
+//             1 to 8px; `apply` gives the smaller side the larger. 0.55 when painted, 0.5 unpainted
+//             beside square icon buttons of its kind, else a note.
+//   volume    text that crowds out a lead, `apply: []` (the fix is markup and words): rows of a list
+//             (3+ row-type rows that hold no list, table, or rows, and are no sections) whose median row takes
+//             more than two lines (0.6), more than three text styles (0.5), or three (a note);
+//             a line is a stacked line box, so a badge centered beside two lines adds none, and a
+//             style is size, weight (400, 500, 600) and ink (primary, secondary, accent), chips and
+//             buttons aside. And a helper sentence under a title (a heading outside rows, or a
+//             card's largest first text) when more content follows in its card or section: the
+//             next text, 6+ words with a stretch of 5+ between commas, at most two numbers, no
+//             dot-separated facts, in a lighter ink, up to three lines (0.55, one check for all).
+//             Secondary ink reads under 0.6x the layer's highest text contrast and is not colored.
+//   large     more than two things compete to lead in view: text at 1.6x the body size (the size
+//             with the most words) or more, a solid fill (3:1 on what is under it; not selected)
+//             holding text or 48px square and under a quarter of the view, an image, chart, or
+//             background image over a quarter; like ones that overlap down (a row of figures, a
+//             pair of solid buttons) count as one, and one inside another counts once. Four or more
+//             score 0.55, three is a note. `apply: []`.
 // `where` names the element holding the value (`div.rtime > span`), never a named ancestor. `apply`
 // is the fix as `[{ selector, property, value }]`; its selector comes from exact() and matches only
 // the elements the fix means (`[]` when none does, or when the fix is markup); the fix sentence
@@ -29,7 +60,13 @@
 // undesigned screen a script can see), `offGrid` (paddings and gaps off the 4px grid),
 // `nestedRadius` (inner radii larger than their box's radius minus the inset), `words` (every visible word in
 // the layer, scrolled out of view too), `rows` and `cards` (sizes and emphases), and `text` (nothing
-// lines, value formats, repeats, truncation). Data (charts, waveforms, avatar stacks) is skipped.
+// lines, value formats, repeats, truncation, and `volume`: words, per list of 3+ rows the median
+// and max lines and text styles, explanatory sentences (secondary ink, a sentence as in volume)
+// inside rows, cards, and under titles, eyebrows (a label of up to four words just above a title,
+// left-aligned with it, smaller), and helper sentences). `shapes` is each role's shape classes
+// `[shape, count, sample]`, `leads` what competes to lead in view `[kind, count, sample]`, and an
+// icon whose box is not square says `not square` in `icons`. Data (charts, waveforms, avatar
+// stacks) is skipped.
 // Draws a panel (outside the region when the window has room) and numbered outlines;
 // window.__countClear() removes them.
 (() => {
@@ -349,7 +386,8 @@
   const STATE = "[aria-current]:not([aria-current=false]), [aria-selected=true], [aria-pressed=true], [data-state=active], [data-state=on], .active, .is-active, .selected, .on";
   const textEls = new Set();
   const all = [layer, ...layer.querySelectorAll("*")].filter((el) => !isData(el) && visible(el) && el.getBoundingClientRect().width);
-  const lowContrast = new Map();
+  const lowContrast = new Map(),
+    inkRatio = new Map();
   const unnamed = [],
     targets = [],
     controls = [];
@@ -418,6 +456,7 @@
           op = opacity(el),
           fg = over([...ink.slice(0, 3), ink[3] * op], bg),
           ratio = ratioOf(fg, bg);
+        inkRatio.set(el, ratio);
         const size = parseFloat(cs.fontSize),
           large = size >= 24 || (size >= 18.66 && Number(cs.fontWeight) >= 700),
           need = large ? 3 : 4.5;
@@ -452,7 +491,7 @@
     for (const l of new Set(["Top", "Right", "Bottom", "Left"].filter((s) => lined(cs, s)).map((s) => `${cs[`border${s}Width`]} ${hex(cs[`border${s}Color`])}`))) tally("lines", l, el);
     if (el instanceof SVGSVGElement) {
       const stroke = cs.stroke !== "none" && parseFloat(cs.strokeWidth) > 0 ? `stroke ${((parseFloat(cs.strokeWidth) * r.width) / (el.viewBox.baseVal?.width || r.width)).toFixed(1)}` : "fill";
-      tally("icons", `${Math.round(r.width)}x${Math.round(r.height)} ${stroke}`, el.closest("button, a, [role], li, label") || el.parentElement);
+      tally("icons", `${Math.round(r.width)}x${Math.round(r.height)} ${stroke}${Math.round(r.width) !== Math.round(r.height) ? " not square" : ""}`, el.closest("button, a, [role], li, label") || el.parentElement);
     }
     const kind = el.matches(CONTROL) ? "controls" : el.matches(BUTTON) ? "buttons" : null;
     if (kind) {
@@ -648,7 +687,7 @@
         !rs.every((r, i) => r.height >= 24 && r.height <= 200 && (i === 0 || r.top >= rs[i - 1].bottom - 1))
       )
         continue;
-      rowTypes.set(sel(run[0]), []);
+      rowTypes.set([...Map.groupBy(run, sel)].sort((a, b) => b[1].length - a[1].length)[0][0], []);
     }
   }
   // One row type across containers: a day of two rows still holds rows.
@@ -1026,6 +1065,338 @@
     truncated: runs.filter(({ el }) => clipped(el) || clipped(el.parentElement)).map(({ text }) => cut(text, 64)),
   };
 
+  // 8. shape, square, volume, large.
+  const painted = (cs) => filled(cs) || ["Top", "Right", "Bottom", "Left"].every((s) => lined(cs, s)) || cs.boxShadow !== "none";
+  const cornerOf = (cs, r) => {
+    const side = Math.min(r.width, r.height);
+    const v = Math.max(
+      ...["TopLeft", "TopRight", "BottomRight", "BottomLeft"].map((c) => {
+        const x = cs[`border${c}Radius`].split(" ")[0];
+        return x.endsWith("%") ? (parseFloat(x) * side) / 100 : parseFloat(x) || 0;
+      }),
+    );
+    return Math.min(v, side / 2);
+  };
+  const formOf = (cs, r) => {
+    const v = cornerOf(cs, r);
+    return [v <= 1 ? "square" : v >= Math.min(r.width, r.height) / 2 - 1 ? "capsule" : "rounded", v];
+  };
+  const REGION = "header, footer, form, fieldset, nav, menu, dialog, [role=toolbar], [role=group], [role=search], [role=dialog], [role=menu], [role=tablist], [role=radiogroup]";
+  const shaped = [];
+  for (const el of all) {
+    if (el === layer || el.matches(STATE)) continue;
+    const r = el.getBoundingClientRect(),
+      cs = getComputedStyle(el),
+      t = el.innerText?.trim() || "";
+    let role = el.matches(BUTTON) ? (t ? "buttons" : "icon buttons") : el.matches(CONTROL) ? "inputs" : null,
+      box = el;
+    if (role === "inputs" && !painted(cs))
+      box = [el.parentElement, el.parentElement?.parentElement].find(
+        (p) => p && p !== layer && p.getBoundingClientRect().height < 56 && painted(getComputedStyle(p)) && p.querySelectorAll(CONTROL).length === 1,
+      );
+    if (
+      !role &&
+      painted(cs) &&
+      r.height < 32 &&
+      r.width < 240 &&
+      el.children.length <= 2 &&
+      !el.matches("table, tr, td, th, label, li, kbd, code, pre") &&
+      !el.closest(BUTTON) &&
+      !el.querySelector(`${BUTTON}, ${CONTROL}`) &&
+      (cs.display.startsWith("inline") || (r.width <= 160 && /flex|grid/.test(getComputedStyle(el.parentElement).display)))
+    )
+      role = t ? (t.length <= 3 ? "badges" : "tags") : r.width <= 12 && r.height <= 12 ? "badges" : null;
+    if (!role || !box || !painted(getComputedStyle(box))) continue;
+    const br = box.getBoundingClientRect(),
+      [form, radius] = formOf(getComputedStyle(box), br);
+    shaped.push({ el: box, role, r: br, form, radius, value: getComputedStyle(box).borderRadius });
+  }
+  const loose = shaped.filter(
+    (s) =>
+      !shaped.some(
+        (o) =>
+          o !== s &&
+          o.role === s.role &&
+          Math.min(Math.abs(o.r.left - s.r.right), Math.abs(s.r.left - o.r.right)) <= 1 &&
+          Math.min(o.r.bottom, s.r.bottom) - Math.max(o.r.top, s.r.top) > s.r.height / 2,
+      ),
+  );
+  const regionOf = (el) => {
+    const col = column(el);
+    for (let n = el.parentElement; n && n !== col && n !== layer; n = n.parentElement) if (n.matches(REGION) || (n.getBoundingClientRect().height > 36 && paintedBox(n))) return n;
+    return null;
+  };
+  for (const s of loose) s.region = regionOf(s.el);
+  const lineRegions = new Set();
+  for (const s of loose)
+    if (!s.region)
+      for (let n = s.el.parentElement, d = 0; n && n !== layer && d < 3; n = n.parentElement, d++)
+        if (loose.some((o) => o !== s && o.role === s.role && !o.region && n.contains(o.el) && o.r.top < s.r.bottom && s.r.top < o.r.bottom)) {
+          lineRegions.add(n);
+          break;
+        }
+  for (const s of loose) s.region ||= [...lineRegions].filter((n) => n.contains(s.el)).sort((a, b) => (a.contains(b) ? -1 : 1))[0];
+  const layerUse = (role, form) => loose.filter((o) => o.role === role && o.form === form).length;
+  const odds = new Map();
+  for (const [region, g] of Map.groupBy(
+    loose.filter((s) => s.region),
+    (s) => s.region,
+  ))
+    for (const [role, ms] of Map.groupBy(g, (s) => s.role)) {
+      if (ms.length < 2) continue;
+      const byForm = [...Map.groupBy(ms, (s) => s.form)].sort((a, b) => b[1].length - a[1].length || layerUse(role, b[0]) - layerUse(role, a[0]));
+      const [main, mains] = byForm[0],
+        want = commonest(mains.map((s) => Math.round(s.radius))),
+        ref = mains.find((s) => Math.round(s.radius) === want);
+      const value = main === "capsule" ? "999px" : main === "square" ? "0px" : ref.value;
+      const off = byForm.slice(1).flatMap(([, x]) => x),
+        slip = main === "rounded" ? mains.filter((s) => Math.abs(s.radius - want) >= 2) : [];
+      for (const [els, score] of [
+        [off, mains.length > off.length ? 0.6 : 0.55],
+        [slip, 0.4],
+      ]) {
+        if (!els.length) continue;
+        const k = `${role}|${at(els[0].el)}|${value}|${score}`;
+        const e = odds.get(k) || { role, main, ref, value, score, odd: els[0], els: [], regions: new Set(), n: 0 };
+        e.els.push(...els.map((s) => s.el));
+        e.regions.add(sel(region));
+        e.n += mains.length;
+        odds.set(k, e);
+      }
+    }
+  for (const e of odds.values()) {
+    const o = e.odd,
+      a = apply(e.els, { "border-radius": e.value }),
+      many = e.els.length > 1;
+    check({
+      kind: "shape",
+      where: at(o.el),
+      text: textOf(o.el),
+      against: `${e.main} at border-radius ${e.ref.value} on ${e.n} of the ${e.role} in ${[...e.regions][0]}${e.regions.size > 1 ? ` and ${e.regions.size - 1} more` : ""}, e.g. ${at(e.ref.el)} "${textOf(e.ref.el)}"`,
+      off: Math.round(o.radius - e.ref.radius),
+      fix: `Set border-radius to ${e.value} on ${and(exactNames(e.els))}; ${many ? `${e.els.length} are` : "it is"} ${o.form}${e.score < 0.5 ? ` at ${Math.round(o.radius)}px` : ""} where the ${e.role} beside ${many ? "them" : "it"} are ${e.main}${e.score < 0.5 ? ` at ${Math.round(e.ref.radius)}px` : ""}.${a ? "" : miss(e.els)}`,
+      count: e.els.length,
+      score: e.score,
+      el: o.el,
+      apply: a || [],
+    });
+  }
+  const shapeList = Object.fromEntries(
+    [...Map.groupBy(shaped, (s) => s.role)].map(([role, ms]) => [
+      role,
+      [...Map.groupBy(ms, (s) => (s.form === "rounded" ? `rounded ${Math.round(s.radius)}px` : s.form))].sort((a, b) => b[1].length - a[1].length).map(([k, xs]) => [k, xs.length, textOf(xs[0].el).slice(0, 32)]),
+    ]),
+  );
+
+  const iconOnly = all.filter((el) => {
+    if (!el.matches(BUTTON) || el.innerText.trim() || getComputedStyle(el).display === "inline") return false;
+    const gs = [...el.querySelectorAll("svg, img")].filter((g) => !g.parentElement.closest("svg")),
+      gr = gs[0]?.getBoundingClientRect();
+    return gs.length === 1 && gr.width <= 32 && gr.height <= 32;
+  });
+  const sides = (el) => [Math.round(el.getBoundingClientRect().width), Math.round(el.getBoundingClientRect().height)];
+  const lopsided = new Map();
+  for (const el of iconOnly) {
+    const [w, h] = sides(el);
+    if (Math.abs(w - h) < 1 || Math.abs(w - h) > 8) continue;
+    const k = `${at(el)}|${w}x${h}`;
+    lopsided.set(k, [...(lopsided.get(k) || []), el]);
+  }
+  for (const els of lopsided.values()) {
+    const el = els[0],
+      cs = getComputedStyle(el),
+      r = el.getBoundingClientRect(),
+      [w, h] = [Math.round(r.width), Math.round(r.height)];
+    const [prop, edges] = w > h ? ["height", ["Top", "Bottom"]] : ["width", ["Left", "Right"]];
+    const v = Math.max(w, h) - (cs.boxSizing === "border-box" ? 0 : edges.reduce((n, s) => n + parseFloat(cs[`padding${s}`]) + parseFloat(cs[`border${s}Width`]), 0));
+    const a = apply(els, { [prop]: `${v}px` });
+    check({
+      kind: "square",
+      where: at(el),
+      text: textOf(el),
+      against: `its ${prop === "height" ? "width" : "height"} ${Math.max(w, h)}px; an icon-only button is square`,
+      off: Math.min(w, h) - Math.max(w, h),
+      fix: `Set ${prop} to ${v}px on ${and(exactNames(els))}; ${els.length > 1 ? `${els.length} icon-only buttons are` : "the icon-only button is"} ${w}x${h}.${a ? "" : miss(els)}`,
+      count: els.length,
+      score: painted(cs) ? 0.55 : iconOnly.some((o) => kindOf(o) === kindOf(el) && sides(o)[0] === sides(o)[1]) ? 0.5 : 0.4,
+      el,
+      apply: a || [],
+    });
+  }
+
+  const ordered = [...textEls],
+    ownText = new Map(runs.map(({ el, text }) => [el, text]));
+  const topInk = Math.max(0, ...inkRatio.values()),
+    sizeOf = (el) => parseFloat(getComputedStyle(el).fontSize),
+    inkOf = (el) => inkRatio.get(el) ?? inkRatio.get(ordered.find((e) => el.contains(e)));
+  const secondary = (el) => inkRatio.get(el) < topInk * 0.6 && chroma(flat(getComputedStyle(el).color)) <= 50;
+  const sentence = (el) => {
+    const s = ownText.get(el) || "";
+    return words(s) >= 6 && !/\s[·•|]\s/.test(s) && s.split(/[,;]|\.\s/).some((f) => words(f) >= 5) && (s.match(/\S*\d\S*/g) || []).length <= 2;
+  };
+  const follows = (a, b) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) && !a.contains(b);
+  const lineCount = (root) => {
+    const rs = [],
+      walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n; (n = walk.nextNode()); ) {
+      if (!/\S/.test(n.textContent) || !visible(n.parentElement) || isData(n.parentElement)) continue;
+      const rg = document.createRange();
+      rg.selectNodeContents(n);
+      rs.push(...[...rg.getClientRects()].filter((q) => q.width > 1));
+    }
+    let n = 0,
+      bottom = -Infinity;
+    for (const q of rs.sort((a, b) => a.bottom - b.bottom)) if (q.top >= bottom - q.height * 0.3) (n++, (bottom = q.bottom));
+    return n;
+  };
+  const styleOf = (e) => {
+    const cs = getComputedStyle(e),
+      w = Number(cs.fontWeight);
+    return `${Math.round(parseFloat(cs.fontSize))}/${w >= 600 ? 600 : w >= 500 ? 500 : 400} ${chroma(flat(cs.color)) > 50 ? "accent" : secondary(e) ? "secondary" : "primary"}`;
+  };
+  const median = (xs) => xs.slice().sort((a, b) => a - b)[Math.floor((xs.length - 1) / 2)];
+  const inList = (e) => [...rowEls].some((r) => r.contains(e));
+  const volLists = [...rowTypes]
+    .filter(([, els]) => els.length >= 3 && !els.some((r) => r.matches("section, fieldset, form, aside") || r.querySelector("ul, ol, dl, table") || [...rowEls].some((x) => x !== r && r.contains(x))))
+    .map(([type, els]) => {
+      const per = els.map((r) => {
+        const ts = ordered.filter((e) => r.contains(e) && !inRow(e, r) && !e.closest(BUTTON) && !shaped.some((s) => s.el.contains(e)));
+        return { r, lines: lineCount(r), styles: [...new Set(ts.map(styleOf))], long: ts.find(sentence) };
+      });
+      const busy = per.slice().sort((a, b) => b.lines - a.lines || b.styles.length - a.styles.length)[0];
+      return {
+        type,
+        el: els[0],
+        rows: els.length,
+        lines: [median(per.map((p) => p.lines)), Math.max(...per.map((p) => p.lines))],
+        styles: [median(per.map((p) => p.styles.length)), Math.max(...per.map((p) => p.styles.length))],
+        names: busy.styles,
+        long: per.find((p) => p.long)?.long,
+      };
+    });
+  for (const l of volLists)
+    if (l.lines[0] > 2 || l.styles[0] > 2)
+      check({
+        kind: "volume",
+        where: l.type,
+        text: textOf(l.el),
+        against: `${l.rows} rows of ${l.type} carry a median ${l.lines[0]} lines (at most ${l.lines[1]}) in ${l.styles[0]} text styles (${l.names.join(", ")})`,
+        off: Math.max(l.lines[0], l.styles[0]) - 2,
+        fix: `One lead per row; move the preview into the detail: keep the title and one meta line in ${l.type}${l.long ? `, and cut ${at(l.long)} "${cut(ownText.get(l.long), 32)}"` : ""}.`,
+        count: l.rows,
+        score: l.lines[0] > 2 ? 0.6 : l.styles[0] > 3 ? 0.5 : 0.4,
+        el: l.el,
+        apply: [],
+      });
+  const titles = new Map();
+  for (const h of all) if (h.matches("h1, h2, h3, h4, h5, h6, [role=heading]") && !inList(h)) titles.set(h, container(h) || column(h));
+  for (const c of cards) {
+    const t = ordered
+      .filter((e) => c.contains(e) && !inRow(e, c))
+      .slice(0, 3)
+      .sort((a, b) => sizeOf(b) - sizeOf(a) || getComputedStyle(b).fontWeight - getComputedStyle(a).fontWeight)[0];
+    if (t && ![...titles.keys()].some((h) => h.contains(t))) titles.set(t, c);
+  }
+  const helpers = [],
+    eyebrows = [];
+  for (const [t, scope] of titles) {
+    const tr = t.getBoundingClientRect(),
+      near = ordered.filter((e) => scope.contains(e) && !t.contains(e) && !e.contains(t));
+    const prev = near.findLast((e) => follows(e, t)),
+      next = near.find((e) => follows(t, e));
+    const pr = prev?.getBoundingClientRect();
+    if (prev && /\p{L}{2}/u.test(t.innerText) && !isValue(t.innerText.trim()) && pr.bottom <= tr.top + 2 && pr.top >= tr.top - 40 && Math.abs(pr.left - tr.left) <= 8 && words(ownText.get(prev) || "") <= 4 && sizeOf(prev) < sizeOf(t)) eyebrows.push(prev);
+    if (
+      next &&
+      !inList(next) &&
+      next.getBoundingClientRect().top >= tr.bottom - 2 &&
+      sentence(next) &&
+      (secondary(next) || inkRatio.get(next) < 0.8 * inkOf(t)) &&
+      lineCount(next) <= 3 &&
+      [...scope.querySelectorAll("*")].some((e) => follows(next, e) && visible(e) && (textEls.has(e) || e.matches(`${BUTTON}, ${CONTROL}, table, ul, ol, dl, img, canvas`)))
+    )
+      helpers.push([next, t]);
+  }
+  if (helpers.length) {
+    const [h, t] = helpers[0];
+    check({
+      kind: "volume",
+      where: at(h),
+      text: textOf(h),
+      against: `a helper sentence under the title ${at(t)} "${textOf(t)}"${helpers.length > 1 ? `, and under ${helpers.length - 1} more titles` : ""}`,
+      off: words(ownText.get(h)),
+      fix: `Cut the sentence under the title (${and(holders(helpers.map(([x]) => x)))}); one lead per card or section: the title and what follows say it, an explanation belongs in the empty state or a tooltip.`,
+      count: helpers.length,
+      score: 0.55,
+      el: h,
+      apply: [],
+    });
+  }
+  const explained = ordered.filter((e) => secondary(e) && sentence(e) && (units.some((u) => u.contains(e)) || helpers.some(([h]) => h === e)));
+  const total = runs.reduce((n, r) => n + words(r.text), 0);
+  text.volume = {
+    words: total,
+    lists: volLists.map((l) => ({ list: l.type, rows: l.rows, lines: l.lines, styles: l.styles })),
+    sentences: { count: explained.length, sample: explained.slice(0, 5).map((e) => cut(ownText.get(e), 48)) },
+    eyebrows: { count: eyebrows.length, sample: eyebrows.slice(0, 5).map((e) => cut(ownText.get(e), 32)) },
+    helpers: { count: helpers.length, sample: helpers.slice(0, 5).map(([e]) => cut(ownText.get(e), 48)) },
+  };
+
+  const bodySize = parseFloat(
+    [...runs.reduce((m, { el, text }) => m.set(getComputedStyle(el).fontSize, (m.get(getComputedStyle(el).fontSize) || 0) + words(text)), new Map())].sort((a, b) => b[1] - a[1])[0]?.[0] || "16",
+  );
+  const lv = layer.getBoundingClientRect();
+  const shown = (r) =>
+    Math.max(0, Math.min(r.right, innerWidth, lv.right) - Math.max(r.left, 0, lv.left)) * Math.max(0, Math.min(r.bottom, innerHeight, lv.bottom) - Math.max(r.top, 0, lv.top));
+  const view = shown(lv);
+  const beneath = (el) => {
+    const st = [];
+    for (let n = el.parentElement; n; n = n.parentElement) {
+      const c = rgba(getComputedStyle(n).backgroundColor);
+      if (c[3]) st.push(c);
+      if (c[3] >= 255) break;
+    }
+    return st.reverse().reduce((u, c) => over(c, u), [255, 255, 255]);
+  };
+  const rivals = [];
+  for (const el of textEls) if (shown(el.getBoundingClientRect()) && sizeOf(el) >= bodySize * 1.6) rivals.push({ el, what: "text", key: `text ${getComputedStyle(el).font}` });
+  for (const el of all) {
+    const cs = getComputedStyle(el),
+      r = el.getBoundingClientRect();
+    if (el === layer || el.matches(STATE) || !filled(cs) || r.width < 24 || r.height < 24 || !shown(r) || r.width * r.height > view / 4 || !(el.innerText?.trim() || (r.width >= 48 && r.height >= 48))) continue;
+    const under = beneath(el);
+    if (ratioOf(over(rgba(cs.backgroundColor), under), under) >= 3) rivals.push({ el, what: "solid fill", key: `fill ${hex(cs.backgroundColor)} ${Math.round(r.height)}` });
+  }
+  for (const el of layer.querySelectorAll("*"))
+    if (
+      (el.matches("img, video, canvas, picture, [role=img]") || (el instanceof SVGSVGElement && !el.parentElement.closest("svg")) || /url\(/.test(getComputedStyle(el).backgroundImage)) &&
+      shown(el.getBoundingClientRect()) > view / 4
+    )
+      rivals.push({ el, what: "image", key: `image ${sel(el)}` });
+  const leads = [];
+  for (const c of rivals.filter((c) => !rivals.some((o) => o !== c && o.el.contains(c.el)))) {
+    const r = c.el.getBoundingClientRect(),
+      same = leads.find((l) => l.key === c.key && l.r.top < r.bottom && r.top < l.r.bottom);
+    if (same) same.n++;
+    else leads.push({ ...c, r, n: 1 });
+  }
+  const leadText = (l) => `${l.what} "${textOf(l.el).slice(0, 24)}"${l.n > 1 ? ` (a row of ${l.n})` : ""}`;
+  if (leads.length > 2)
+    check({
+      kind: "large",
+      where: at(leads[0].el),
+      text: textOf(leads[0].el),
+      against: `${leads.length} things compete to lead in view: ${leads.map(leadText).join(", ")}`,
+      off: leads.length - 2,
+      fix: `Keep one lead and at most one second; set the rest back: figures to the body size, a second solid button to an outline, an image under a quarter of the view (${leads
+        .map((l) => at(l.el))
+        .join(", ")}).`,
+      count: leads.length,
+      score: leads.length >= 4 ? 0.55 : 0.4,
+      el: leads[0].el,
+      apply: [],
+    });
+
   // Rank, number, draw.
   const ranked = checks.sort((a, b) => b.score - a.score).slice(0, 20);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -1033,13 +1404,12 @@
   host.id = "__count";
   host.style.cssText = "position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:2147483646";
   const root = host.attachShadow({ mode: "open" });
-  const COLOR = { crowding: "#d9480f", sibling: "#7048e8", control: "#0c8599", contrast: "#c2255c" };
+  const COLOR = { crowding: "#d9480f", sibling: "#7048e8", control: "#0c8599", contrast: "#c2255c", shape: "#2b8a3e", square: "#1971c2", volume: "#862e9c", large: "#e67700" };
   const marks = ranked.map((f, i) => {
     const r = f.el.getBoundingClientRect(),
       [x, y] = [r.left + scrollX, r.top + scrollY];
     return `<i class="m" style="left:${x - 2}px;top:${y - 2}px;width:${r.width + 4}px;height:${r.height + 4}px;border-color:${COLOR[f.kind]}"><b style="background:${COLOR[f.kind]}">${i + 1}</b></i>`;
   });
-  const total = runs.reduce((n, r) => n + words(r.text), 0);
   root.innerHTML = `<style>
     :host { all: initial; }
     .m { position: absolute; border: 2px solid; border-radius: 3px; box-sizing: border-box; }
@@ -1107,6 +1477,8 @@
     unnamed: unnamed.slice(0, 20),
     smallTargets: small.slice(0, 20),
     slop: [...slop.values()],
+    shapes: shapeList,
+    leads: leads.map((l) => [l.what, l.n, textOf(l.el).slice(0, 32)]),
     offGrid: [...offGrid.values()].sort((a, b) => b[1] - a[1]),
     nestedRadius,
     rows,

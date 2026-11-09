@@ -4,7 +4,7 @@ Use this when the user asks for a click dummy, a mockup, a wireframe, or a confi
 
 ## 1 Wireframe first
 
-Recommended when the layout is open: draw the screens in greyscale (grey boxes, text as bars, real content order, no color, icons, or styling) and let the user pick the layout before parts get styled. Skip it when the layout is settled.
+Recommended when the layout is open: write the [skeleton](layout.md#skeleton), draw the screens from it in greyscale (grey boxes, text as bars, real content order, no color, icons, or styling), and let the user pick the layout before parts get styled. Skip it when the layout is settled.
 
 ## 2 Parts
 

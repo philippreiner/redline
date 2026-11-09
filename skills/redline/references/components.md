@@ -36,6 +36,13 @@ Use the pattern an expert in the field expects: users bring habits from the tool
 - A state renders one way (chip, dot, or text) in every list, from one status vocabulary. A state mark shows only on the exception; the normal state shows nothing.
 - Each action keeps one word, one icon, and one shortcut everywhere.
 - A value is not a state: durations, counts, and dates are plain text, never chips.
+- Different roles look different: a decorative icon never looks clickable, a secondary action never wears the primary's fill, and two kinds of badge never share shape and color.
+
+## One shape language
+
+- Shape follows the control's height tier, the same across the product: buttons, inputs, selects, and menu items are rounded rectangles; a capsule belongs to one role only, such as tags; square corners belong to bars, tables, and full-bleed regions.
+- One region keeps one shape per role: a pill "New chat" beside rounded "Goal" and "Active" reads as two products. `count.js` `shape` lists the odd one, and `shapes` the inventory per role.
+- Inside a box the radius is concentric ([foundations.md](foundations.md#lines-shapes-and-icons)); a part standing alone keeps its own fixed radius.
 
 ## Parts in a region
 
@@ -43,15 +50,15 @@ Parts in one region (a toolbar, a form row, a card's foot) look like one set:
 
 - One primary action per region; the rest secondary, quiet, or in a menu.
 - One style per role: every secondary button in the region looks the same.
-- One height for controls side by side; their text and icons share the center line.
+- One height for controls side by side; their text and icons share the center line. The preferred one differs by style, never by size.
 - One radius and one line weight across the region; gaps from one step of the spacing scale.
 - `count.js` `control` finds controls side by side whose heights differ by 1 to 4px, and `sibling` the one part of a set styled unlike the rest.
 
 ## Inner balance
 
-- Icon and label are sized together and centered on the text's visual middle, not its line box.
-- Padding is equal on matching sides; horizontal padding is at least the vertical. An icon-only button is square.
-- Center by eye, not by numbers: a leading icon, a triangle, or a round shape shifts until it looks centered.
+- Icon and label are sized together, the icon centered on the text's cap height (the middle of its capitals), not its line box.
+- Padding is equal on matching sides; horizontal padding is at least the vertical. An icon-only button is square, one size per bar (`count.js` `square`).
+- Center by eye where the shape is uneven: a play triangle or chevron centers on its centroid, about a sixth of its width toward the point; a circle among squares runs about 13% larger to look the same size; an arrow shifts toward its light side. Text and symmetric icons center by the numbers.
 - One lead inside the part: the label or the value is strong, not both.
 - At its longest value, content still keeps the part's padding.
 
@@ -59,5 +66,5 @@ Parts in one region (a toolbar, a form row, a card's foot) look like one set:
 
 | Number | Target |
 | --- | --- |
-| `count.js` `control` and `sibling` checks at 0.5 or more | None |
+| `count.js` `control`, `sibling`, `shape`, and `square` checks at 0.5 or more | None |
 | `count.js` `distinct.buttons`, `distinct.controls` | The library's variants, no more |

@@ -20,7 +20,7 @@ Each script returns `checks`, ranked by `score`, and numbers them on its overlay
 
 | Field | Holds |
 | --- | --- |
-| `kind` | `edge`, `baseline`, `inset` (redline); `contrast`, `sibling`, `control`, `crowding` (count); `rhythm`, `dead-zone`, `collision`, `break` (view bands) |
+| `kind` | `edge`, `baseline`, `inset`, `band`, `axis`, `indent` (redline); `contrast`, `sibling`, `control`, `crowding`, `shape`, `square`, `volume`, `large` (count); `rhythm`, `dead-zone`, `collision`, `break` (view bands) |
 | `where` | The element that holds the value, by a handle you can search the code for: an id, `data-slot`, `data-testid`, or its rarest class that is not a utility class, else through the nearest ancestor with one (`ul[data-slot="list"] h2`) |
 | `text` | Its visible text, or `image 320×180`, `box 120×80` |
 | `against` | What it is off from, with that element and value |
@@ -51,6 +51,8 @@ Guides are scoped: a start compares with starts in its own column and container,
 
 Down the page it measures as it does across: a card's first text below its top edge and its last content above its bottom edge, against cards of one kind (`inset`, `padding-block` when a taller header control centres the title lower); a label and its value in a `dl` or any list of side-by-side pairs on one line (`baseline`); in a row of three or more cards, each text style on one line, where a text that wraps and pushes the ones below it is one check naming what it pushes (`baseline`); and card tops, bottoms, and heading baselines in neighbouring columns that miss each other by 1 to 12px (`edge`, axis y; a larger difference is a layout choice). A check whose only fix would zero a control's padding, give it a negative margin, or change a font size is dropped.
 
+In a shell it measures across panes (columns side by side, 70% of the layer's height or more): a pane header 1 to 12px off the height most headers share, or whose content centre is 2 to 12px off theirs, is a `band` check (`height`, or `padding-block` when the height is auto); a pane whose content inset is 2 to 8px off what most panes use is one `inset`. In a stack of three or more blocks, a narrower block centred among start-aligned ones, or start-aligned among centred ones, is an `axis` check, fixed the way the layout places it (`align-self`, `justify-self`, `margin-inline`, `justify-content`, `text-align`). In three or more rows of a column, the trailing item (badge, count, time, chevron, icon button; a header's action counts too) 1 to 8px off the right edge most share is an `edge` check (axis end). In a tree, a row 1 to 8px off its level, or a child 1 to 8px off its parent's label, is an `indent` check; the fix applies one step to every indenting container. A selected row or active tab among unpainted twins is a state, measured by its contents.
+
 **Live.** `window.__redlineLive = true` before the script, or `<script src=".../redline.js"></script>` in a click dummy, keeps it redrawing on DOM changes, scroll, and resize. **Alt+R** hides and shows it. `window.__redlineClear()` removes the overlay and its listeners.
 
 JSON: `lines`, `rows` (guides drawn down and across), `near` and `far` (`[{text, where, off, axis}]`, 1 to 3px and 4 to 8px), `checks`.
@@ -65,8 +67,12 @@ Is the screen crowded or inconsistent? A floating panel lists the checks by numb
 | `sibling` | One of three or more siblings of one kind (tag and class) styled differently: fill, border, padding, first text. Also a few cells unlike the rest of their column, in a table or four or more repeated rows: a link among plain text, a chip among bare text, a value in another format ("Nov 21" among "14.11.2026", no `apply`). In a row of three or more like cards, a text whose size, weight, or color differs from its row-mates', with their values as the `apply`. Hue alone is designed (status chips, a red overdue date) |
 | `control` | Controls in one group whose heights differ by 1 to 4px |
 | `crowding` | One action label on four or more buttons in a column; a note under 0.5 |
+| `shape` | Painted controls of one role (buttons, icon buttons, inputs and selects, tags, badges and dots) in one region (a card, header, form, toolbar, or the controls on one line) that mix square, rounded, and capsule; the odd ones take the region's commonest radius. A rounded radius 2px or more off it is a note |
+| `square` | An icon-only button whose width and height differ by 1 to 8px; the smaller side takes the larger. Unpainted, it prints only beside square ones of its kind |
+| `volume` | Rows of a list whose median row takes more than two lines (more than three text styles prints too, three is a note), or a helper sentence under a card's or section's title with more content below it. No `apply`: cut words or move the preview into the detail |
+| `large` | More than two things compete to lead in view: text at 1.6x the body size, solid fills, images over a quarter of the view; a row of like figures counts as one. Four or more print, three is a note. No `apply` |
 
-JSON besides `checks`: the inventory of the whole layer, scrolled out of view too (`fontSizes`, `fontWeights`, `lineHeights`, `textColors`, `backgrounds`, `radii`, `lines`, `shadows`, `gaps`, `icons`, `buttons`, `controls`, each `[value, count, sample]`), `distinct` and `oneOffs` per list, `tokens` and `offTokenValues`, `unnamed` and `smallTargets`, `slop` (the tells of [slop.md](../references/slop.md) a script can see, each `[tell, count, sample]`), `offGrid` (paddings and gaps off the 4px grid), `nestedRadius` (inner radii larger than their box's radius minus the inset), `words`, `rows` and `cards`, and `text` (`nothing`, `valueFormats`, `repeats`).
+JSON besides `checks`: the inventory of the whole layer, scrolled out of view too (`fontSizes`, `fontWeights`, `lineHeights`, `textColors`, `backgrounds`, `radii`, `lines`, `shadows`, `gaps`, `icons`, `buttons`, `controls`, each `[value, count, sample]`), `distinct` and `oneOffs` per list, `tokens` and `offTokenValues`, `unnamed` and `smallTargets`, `slop` (the tells of [slop.md](../references/slop.md) a script can see, each `[tell, count, sample]`), `offGrid` (paddings and gaps off the 4px grid), `nestedRadius` (inner radii larger than their box's radius minus the inset), `words`, `rows` and `cards`, `shapes` (each role's shape classes), `leads` (what competes to lead in view), and `text` (`nothing`, `valueFormats`, `repeats`, and `volume`: words, per list the median and max lines and text styles per row, explanatory sentences, eyebrows, helper sentences); an icon whose box is not square says `not square` in `icons`.
 
 ## view.js
 
@@ -93,7 +99,7 @@ scripts/measure.sh --try <out-dir> <n> [fix.css]
 scripts/measure.sh --compare <before-dir> <after-dir>
 ```
 
-It measures the page already open in agent-browser's session (`AGENT_BROWSER_SESSION`, else the default), so a signed-in app stays signed in. `--url` opens a page first; a local file works. The page stays open for `--try`; `agent-browser close` ends the session. The window is `WIDTH` x `HEIGHT` (1440x900). It finishes the page's entry animations first, so every image shows the page at rest.
+It measures the page already open in agent-browser's session (`AGENT_BROWSER_SESSION`, else the default), so a signed-in app stays signed in; it warns when the page looks signed out (a password field, a login or auth path). `--url` opens a page first; a local file works. The page stays open for `--try`; `agent-browser close` ends the session. The window is `WIDTH` x `HEIGHT` (1440x900). It finishes the page's entry animations first, so every image shows the page at rest.
 
 A run saves `page.png`, then `redline`, `count`, and `view-bands` as png and json, and `min-checks.json`: every check in one list, those at score 0.5 or more first, ranked by score and family (layout, then composition, then alignment, then tokens). It prints the minimum checks: the ones at score 0.5 or more, numbered by their place in `min-checks.json` (checks with the same edit print as one line), with `--all` the stress breaks, and last a line that sends you to the images:
 

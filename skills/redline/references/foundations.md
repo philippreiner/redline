@@ -18,7 +18,7 @@ Every extra size, weight, color, radius, line, or gap is one more thing the eye 
 | Font sizes | About five on a page, three per region, two per row |
 | Font weights | Two: regular and one emphasis |
 | Text colors | Three inks (primary, secondary, muted) plus meaning colors |
-| Radii | One family: control, box, and pill |
+| Radii | One family: control, box, and one capsule role ([components.md](components.md#one-shape-language)) |
 | Lines | One hairline weight and color, one stronger line for focus or the picked item |
 | Shadows | One per depth level |
 | Icons | One set and style, one size per text size |
@@ -45,7 +45,7 @@ Every extra size, weight, color, radius, line, or gap is one more thing the eye 
 
 - Lines, icon strokes, and text stems look like one weight: a hairline border, icons whose stroke renders near the stem of the body text. A heavy icon beside light text, or a 2px border among 1px ones, looks like another product.
 - Icon sizes follow text sizes: about 16 beside 13 to 14px text, 20 beside 16 to 18px. `count.js` `icons` lists each size with its rendered stroke.
-- Radii nest: an inner radius is the outer radius minus the padding between them, never below 4, or square. An inner box as round as its outer one looks pinched at the corners. `count.js` `nestedRadius` lists the pairs that break it.
+- Radii nest: an inner radius is the outer radius minus the padding between them, border included, never below 4, or square. The gap around the corner then looks as wide as along the edges, neither pinched nor flared. An inner box as round as its outer one looks pinched at the corners. `count.js` `nestedRadius` lists the pairs that break it.
 - One button shape: one radius and one padding rule; height by context.
 
 ## Contrast

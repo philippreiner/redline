@@ -2,9 +2,29 @@
 
 Start with the big picture: good detail cannot fix a wrong frame. This lens is the layout gate: look at the screen the way a loading skeleton shows it, grey boxes only, and decide what goes where before any part gets styled.
 
+## Skeleton
+
+The skeleton is the screen written down before anything is styled: six lines, then the greyscale wireframe drawn from them. Every later part fills a slot it names; a part with no slot is an addition to argue for.
+
+- Frame: the frame from the list below and the screen in this product that already uses it.
+- Regions: each mass in reading order, with its job and width (fixed, a share, or the rest).
+- Bands: the rows across the screen (header, toolbar, content, foot) with heights every pane shares.
+- Keylines: every x where things start, from the left, each named by the regions that use it. Few.
+- Axis: start-aligned or centered, per region ([alignment.md](alignment.md#axis)).
+- Lead: per region the first, second, and third thing; for the screen, the one thing that leads.
+
+```
+Frame: detail, list beside a sheet, like Programs
+Regions: rail 240 | list 360 | detail, the rest, content capped at 880
+Bands: header 48 in all three panes; detail foot 56 for the composer
+Keylines: 24 rail, 264 list, 624 detail title and content
+Axis: all start-aligned; the list's empty state centered
+Lead: the detail title, then the health line, then the next due commitment
+```
+
 ## Grey boxes
 
-- For a new layout, draw it as a greyscale wireframe first. For an existing screen, run `view.js` with `window.__view = "wireframe"` and screenshot: boxes in their own grey, text as bars, icons as blocks.
+- For a new layout, draw the skeleton as a greyscale wireframe first. For an existing screen, run `view.js` with `window.__view = "wireframe"` and screenshot: boxes in their own grey, text as bars, icons as blocks.
 - Name the masses. Two or three large shapes in a fixed order look calm; ten small ones look scattered.
 - Each mass has one job. A mass without a job goes.
 - One container language per screen: an input, a banner, a card, a tile, and a dashed tile in one column are four too many.
@@ -16,6 +36,16 @@ Start with the big picture: good detail cannot fix a wrong frame. This lens is t
 - Anchor content to that keyline. A column centered in a wide window moves away from the edge every other page shares.
 - Cap widths: prose at a readable measure, lists and tables wider. Past the cap, the rest of a wide screen stays empty.
 - Place the regions before polishing any of them.
+
+## Placement
+
+Where a thing goes is settled before how it looks; users look where the tools they know put it.
+
+- A bar has three zones: leading for navigation and the title, the middle for the few common actions, trailing for search, More, and the one primary action. At most three clusters per bar.
+- The answer the user came for sits in the top half of the first screen, on the content's left edge, distinguishing words first.
+- A screen-wide action sits in the header's trailing zone; an action on one thing sits beside it ([hierarchy.md](hierarchy.md#act-where-you-look)).
+- What the user needs stays out of the bottom of a sidebar or long panel; account and settings may live there.
+- A thing with no edge, region, or subject beside it has no place yet: give it one or cut it.
 
 ## Containers
 
@@ -61,6 +91,9 @@ Every group is held by space, type, tone, a line, or a box. Use the weakest that
 - Weight sits where reading starts (top left in left-to-right languages) and thins toward the edges.
 - A heavy element far from what it acts on (a dark button alone in a corner, a big empty card) pulls the eye off the task. Move it beside its subject or lighten it.
 - A row whose title ends at the left and whose value starts at the far right has a hole in the middle. Cap the row width or bring the value closer.
+- Chrome recedes so content leads: the rail and bars sit quieter than the content, with lighter ink, fewer and smaller icons, untinted surfaces, and few separators.
+- Balance can be asymmetric: a dense pane balances a wide quiet one. Fill a light side with a few small things on its lines, never one big block.
+- Columns side by side end together: card pairs share their height, and neighbor panes their foot line.
 
 ## Far view
 

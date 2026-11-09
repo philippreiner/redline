@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Controls: shapes, square icon buttons, text volume, competing leads</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:400 13px/20px -apple-system,"Helvetica Neue",Helvetica,sans-serif;color:#1f2328;background:#fff}
+button,input,select{font:inherit;color:inherit;background:none;border:0}
+ul{list-style:none}
+svg{display:block;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+main{display:grid;grid-template-columns:1fr 1fr;gap:32px;padding:24px 32px}
+section.pane{display:flex;flex-direction:column;gap:16px;min-width:0}
+h2{font-size:22px;line-height:28px;font-weight:600}
+.toolbar{display:flex;align-items:center;gap:8px}
+.toolbar .search{flex:1;height:28px;padding:0 10px;border:1px solid #d0d5db;border-radius:6px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:1px solid #d0d5db;border-radius:6px;font-weight:500;white-space:nowrap;cursor:pointer}
+.btn.solid{background:#2a5bd7;border-color:#2a5bd7;color:#fff}
+.icon{display:grid;place-items:center;width:28px;height:28px;border:1px solid #d0d5db;border-radius:6px;color:#57606a}
+form.add{display:flex;align-items:center;gap:8px}
+form.add input,form.add select{height:28px;padding:0 8px;border:1px solid #d0d5db;border-radius:6px;min-width:0}
+form.add .grow{flex:1}
+.card{border:1px solid #e3e6ea;border-radius:8px}
+.list > header{display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-bottom:1px solid #eef0f2}
+.list h3{font-size:14px;font-weight:600}
+.count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#eef0f2;color:#57606a;font-size:12px}
+.update{display:flex;flex-direction:column;gap:2px;padding:12px 16px;border-bottom:1px solid #eef0f2}
+.update:last-child{border-bottom:0}
+.update .title{font-size:14px;font-weight:500;color:#1f2328}
+.update .why{color:#57606a}
+.update .meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#57606a}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:4px;background:#eef2ff;color:#3730a3;font-size:12px}
+.kpi{padding:16px;display:flex;flex-direction:column;gap:12px}
+.kpi h3{font-size:15px;line-height:22px;font-weight:600}
+.kpi dl{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.kpi dt{font-size:12px;color:#57606a}
+.kpi dd{font-size:15px;line-height:22px;font-weight:600}
+.kpi .foot{display:flex;gap:8px;padding-top:12px;border-top:1px solid #eef0f2}
+/* seeded defects, numbered as in ground-truth.md */
+#seeded .btn.pill{border-radius:999px}                  /* 1: a pill beside rounded-rect buttons and a rounded-rect input */
+#seeded .icon.short{height:24px}                        /* 2: an icon-only button 28x24 */
+#seeded form.add select{border-radius:0}                /* 3: a square select between rounded inputs */
+#seeded .kpi .foot .btn.sq{border-radius:0}             /* 4: a square button beside a rounded one */
+#seeded .tag.round{border-radius:10px}                  /* 5: a capsule tag beside rounded ones */
+#seeded .kpi .eyebrow{font-size:11px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#57606a}
+#seeded .kpi .help{color:#57606a}                       /* 8: a helper sentence under the title */
+#seeded .kpi dd{font-size:28px;line-height:34px}        /* 9: large figures, a solid button in the form and the card: four leads */
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+</svg>
+<main>
+  <section class="pane" id="seeded">
+    <h2>Cloud Transformation</h2>
+    <div class="toolbar" role="toolbar" aria-label="Workstreams">
+      <input class="search" placeholder="Search workstreams" aria-label="Search workstreams">
+      <button class="btn"><svg width="14" height="14"><use href="#i-filter"/></svg>Filter</button>
+      <button class="btn">Export</button>
+      <button class="btn pill"><svg width="14" height="14"><use href="#i-plus"/></svg>New workstream</button>
+      <button class="icon short" aria-label="More actions"><svg width="16" height="16"><use href="#i-dots"/></svg></button>
+    </div>
+    <form class="add" onsubmit="return false">
+      <input class="grow" placeholder="Milestone" aria-label="Milestone">
+      <select aria-label="Workstream"><option>ERP migration</option><option>WMS cutover</option></select>
+      <input placeholder="Due" aria-label="Due" value="28.11.2026">
+      <button class="btn solid">Add</button>
+    </form>
+    <section class="card list">
+      <header><h3>Workstream updates</h3></header>
+      <ul>
+        <li class="update"><span class="title">Carrier label interface retest</span><span class="why">The retest moved because the label service rejected a share of test shipments; the vendor patch lands on Thursday.</span><span class="meta"><span class="tag round">WMS cutover</span>Blue Yonder, 2 days ago</span></li>
+        <li class="update"><span class="title">Inventory snapshot for cutover weekend</span><span class="why">Warehouse teams freeze stock moves for the snapshot, so inbound trucks need slots outside the freeze window.</span><span class="meta"><span class="tag">WMS cutover</span>Warehouse operations, 3 days ago</span></li>
+        <li class="update"><span class="title">Company code data load</span><span class="why">Open items from the legacy ledger still fail the mapping check and block the second mock load for finance.</span><span class="meta"><span class="tag">ERP migration</span>SAP basis team, 4 days ago</span></li>
+      </ul>
+    </section>
+    <section class="card kpi">
+      <span class="eyebrow">S/4HANA Finance</span>
+      <h3>Finance close readiness</h3>
+      <p class="help">Readiness combines open defects, data load status and training completion across all company codes.</p>
+      <dl><div><dt>Open defects</dt><dd>42</dd></div><div><dt>Data loaded</dt><dd>87 %</dd></div><div><dt>Trainings left</dt><dd>3</dd></div></dl>
+      <div class="foot"><button class="btn solid"><svg width="16" height="14"><use href="#i-open"/></svg>Open plan</button><button class="btn sq">Share</button></div>
+    </section>
+  </section>
+
+  <section class="pane" id="clean">
+    <h2>Cloud Transformation</h2>
+    <div class="toolbar" role="toolbar" aria-label="Workstreams">
+      <input class="search" placeholder="Search workstreams" aria-label="Search workstreams">
+      <button class="btn"><svg width="14" height="14"><use href="#i-filter"/></svg>Filter</button>
+      <button class="btn">Export</button>
+      <button class="btn"><svg width="14" height="14"><use href="#i-plus"/></svg>New workstream</button>
+      <button class="icon" aria-label="More actions"><svg width="16" height="16"><use href="#i-dots"/></svg></button>
+    </div>
+    <form class="add" onsubmit="return false">
+      <input class="grow" placeholder="Milestone" aria-label="Milestone">
+      <select aria-label="Workstream"><option>ERP migration</option><option>WMS cutover</option></select>
+      <input placeholder="Due" aria-label="Due" value="28.11.2026">
+      <button class="btn solid">Add</button>
+    </form>
+    <section class="card list">
+      <header><h3>Workstream updates</h3><span class="count">3</span></header>
+      <ul>
+        <li class="update"><span class="title">Carrier label interface retest</span><span class="meta"><span class="tag">WMS cutover</span>Blue Yonder, 2 days ago</span></li>
+        <li class="update"><span class="title">Inventory snapshot for cutover weekend</span><span class="meta"><span class="tag">WMS cutover</span>Warehouse operations, 3 days ago</span></li>
+        <li class="update"><span class="title">Company code data load</span><span class="meta"><span class="tag">ERP migration</span>SAP basis team, 4 days ago</span></li>
+      </ul>
+    </section>
+    <section class="card kpi">
+      <h3>Finance close readiness</h3>
+      <dl><div><dt>Open defects</dt><dd>42</dd></div><div><dt>Data loaded</dt><dd>87 %</dd></div><div><dt>Trainings left</dt><dd>3</dd></div></dl>
+      <div class="foot"><button class="btn"><svg width="16" height="16"><use href="#i-open"/></svg>Open plan</button><button class="btn">Share</button></div>
+    </section>
+  </section>
+</main>
+</body>
+</html>

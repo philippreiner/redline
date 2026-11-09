@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Clean sidebar</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:13px/1.4 -apple-system,Helvetica,sans-serif;color:#1d1f23;background:#fff}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:#6b7079;stroke-width:1.5}
+svg.c{width:10px;height:10px;flex:none;fill:#9a9ea6}
+button{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:240px 1fr;height:100vh}
+.side{display:flex;flex-direction:column;background:#f7f7f8;border-right:1px solid #e6e7ea;min-width:0}
+.bar{display:flex;align-items:center;gap:8px;height:40px;padding:0 16px;flex:none}
+.lights{display:flex;gap:8px;flex:1}
+.lights i{width:12px;height:12px;border-radius:50%;background:#e0e1e4}
+.ibtn{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:6px;background:none;padding:0}
+.bar .ibtn{width:16px;height:16px}
+.nav{padding:0 8px 16px;overflow:auto;flex:1}
+.wsrow{display:flex;align-items:center;gap:8px;height:36px;padding:0 8px;margin-bottom:8px}
+.ws{display:flex;align-items:center;gap:8px;flex:1;min-width:0;font-weight:600;white-space:nowrap}
+.logo{width:16px;height:16px;border-radius:4px;background:#2f3a4a;flex:none}
+.wsrow .search{width:28px}
+.compose{background:#fff;box-shadow:0 0 0 1px #e1e2e6}
+.row{display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;border-radius:6px;color:#2a2d33;text-decoration:none}
+.row.on{background:#ebecef}
+.row .label{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11px;line-height:16px;padding:0 6px;border-radius:8px;background:#e3e5e9;color:#3d4148}
+.sect{display:flex;align-items:center;gap:4px;height:28px;padding:0 8px;margin-top:16px;font-size:12px;font-weight:500;color:#6b7079}
+.kids{padding-left:24px}
+.main{display:flex;flex-direction:column;min-width:0}
+.main .bar{border-bottom:1px solid #e6e7ea}
+.tab{display:flex;align-items:center;gap:8px;font-weight:500}
+.content{padding:24px 32px}
+.content h1{font-size:20px;line-height:28px;margin:0 0 4px}
+.content .sub{margin:0 0 20px;color:#5d626b}
+.list{margin:0;padding:0;list-style:none;border-top:1px solid #f0f1f3}
+.list li{display:flex;align-items:center;gap:8px;height:36px;border-bottom:1px solid #f0f1f3}
+.list li span{flex:1}
+.list li em{font-style:normal;font-size:12px;color:#5d626b}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+<symbol id="sq" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/></symbol>
+<symbol id="ci" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/></symbol>
+<symbol id="tr" viewBox="0 0 16 16"><path d="M2.5 13.5h11L8 3z"/></symbol>
+<symbol id="se" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></symbol>
+<symbol id="ed" viewBox="0 0 16 16"><path d="M3 13h3l7-7-3-3-7 7z"/></symbol>
+<symbol id="lt" viewBox="0 0 16 16"><path d="M10 3 5 8l5 5"/></symbol>
+<symbol id="dn" viewBox="0 0 10 10"><path d="M2 3.5h6L5 7z"/></symbol>
+</svg>
+<div class="app">
+<aside class="side">
+  <div class="bar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <button class="ibtn back" aria-label="Back"><svg class="i"><use href="#lt"/></svg></button>
+    <button class="ibtn history" aria-label="History"><svg class="i"><use href="#ci"/></svg></button>
+  </div>
+  <nav class="nav">
+    <div class="wsrow">
+      <div class="ws"><span class="logo"></span>Aldermoor Logistics<svg class="c"><use href="#dn"/></svg></div>
+      <button class="ibtn search" aria-label="Search"><svg class="i"><use href="#se"/></svg></button>
+      <button class="ibtn compose" aria-label="New chat"><svg class="i"><use href="#ed"/></svg></button>
+    </div>
+    <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Inbox</span><span class="badge">3</span></a>
+    <a class="row" href="#"><svg class="i"><use href="#tr"/></svg><span class="label">My actions</span><span class="badge">12</span></a>
+    <div class="sect">Workspace<svg class="c"><use href="#dn"/></svg></div>
+    <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Programs</span></a>
+    <a class="row" href="#"><svg class="i"><use href="#ci"/></svg><span class="label">Roadmaps</span></a>
+    <a class="row" href="#"><svg class="i"><use href="#tr"/></svg><span class="label">Decisions</span><span class="badge">2</span></a>
+    <div class="sect">Favorites<svg class="c"><use href="#dn"/></svg></div>
+    <a class="row on" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Cloud Transformation</span></a>
+    <a class="row" href="#"><svg class="i"><use href="#ci"/></svg><span class="label">Steerco week 45</span></a>
+    <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">S/4HANA Finance</span></a>
+    <div class="sect">Your teams<svg class="c"><use href="#dn"/></svg></div>
+    <div class="group">
+      <a class="row" href="#"><svg class="i"><use href="#tr"/></svg><span class="label">Infrastructure</span></a>
+      <div class="kids">
+        <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Actions</span><span class="badge">5</span></a>
+        <div class="kids">
+          <a class="row" href="#"><span class="label">Open</span></a>
+          <a class="row" href="#"><span class="label">Backlog</span></a>
+        </div>
+        <a class="row" href="#"><svg class="i"><use href="#ci"/></svg><span class="label">Workstreams</span></a>
+      </div>
+    </div>
+    <div class="group">
+      <a class="row" href="#"><svg class="i"><use href="#tr"/></svg><span class="label">Finance systems</span></a>
+      <div class="kids">
+        <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Actions</span></a>
+        <a class="row" href="#"><svg class="i"><use href="#ci"/></svg><span class="label">Workstreams</span><span class="badge">1</span></a>
+      </div>
+    </div>
+  </nav>
+</aside>
+<main class="main">
+  <div class="bar"><div class="tab"><svg class="i"><use href="#sq"/></svg>Cloud Transformation</div></div>
+  <div class="content">
+    <h1>Cloud Transformation</h1>
+    <p class="sub">Program, 6 workstreams, steering committee on Thursday</p>
+    <ul class="list">
+      <li><svg class="i"><use href="#sq"/></svg><span>ERP migration</span><em>On track</em></li>
+      <li><svg class="i"><use href="#sq"/></svg><span>WMS cutover</span><em>At risk</em></li>
+      <li><svg class="i"><use href="#sq"/></svg><span>Data center exit</span><em>On track</em></li>
+      <li><svg class="i"><use href="#sq"/></svg><span>Identity platform</span><em>Blocked</em></li>
+    </ul>
+  </div>
+</main>
+</div>
+</body>
+</html>

@@ -9,15 +9,17 @@ You are the designer of the interface, the interaction, and the journey through 
 
 Work the way a world-class expert in this product's domain and in interaction and visual design would. The project's design rules (for example `DESIGN.md`) and component library are the defaults; ask what that expert would recommend, and where a rule would take away something users rely on or make the screen worse, do the better thing and name the rule you bent. Change a written rule only when the user asks.
 
+Ensure you read, understand and apply most of the principles, rules and tools in this skill.
+
 ## Principles
 
 The rubric for every lens and for the critic.
 
-1. **One thing leads.** The answer to the question the user came with wins the squint test. Quiet the neighbors before adding emphasis.
-2. **Less.** Every element answers a question the user has on this screen, or it goes. One way to do each thing. Cut taglines, helper text, and secondary labels: a screen that needs them to make sense needs a better layout, not more words. A screen with less on it looks more finished.
-3. **Few variants.** One size, color, radius, line, and gap per role, used everywhere. A difference is deliberate and rare: it sets a region apart or marks the one thing that leads; otherwise it goes.
+1. **One thing leads.** The answer to the question the user came with wins the squint test, and each region has one focal point. Quiet the neighbors before adding emphasis; chrome recedes so content leads.
+2. **Less.** Every element answers a question the user has on this screen, or it goes. A new element displaces one or moves behind a click. One way to do each thing. Cut taglines, helper text, and secondary labels: a screen that needs them to make sense needs a better layout, not more words. A screen with less on it looks more finished.
+3. **Few variants.** One size, color, shape, line, and gap per role, used everywhere: controls are rounded rectangles or capsules, never both in one region. A difference is deliberate and rare: it sets a region apart or marks the one thing that leads; otherwise it goes.
 4. **Space groups.** Proximity first, then tone, then a line, then a box: the weakest means that holds the group. A divider between every row and a border around every block are the tells of skipping the first two.
-5. **Line up.** Every edge sits on an edge already there, across and down, and every size and gap on the 4px grid.
+5. **Line up.** Each region picks one axis, start-aligned or centered. Every edge sits on an edge already there, across and down, panes included; every size and gap sits on the 4px grid. Align only what belongs together, indent only true children.
 6. **Act where you look.** A control sits beside what it changes; the result shows where the action happened.
 7. **Show what is there.** Real content at real lengths decides the design. A section with nothing in it leaves.
 8. **Predictable.** The same thing looks and behaves the same everywhere, the way the tools users already know taught them. A newcomer can explain the screen in one sentence; each surprise needs a reason.
@@ -44,10 +46,11 @@ The rubric for every lens and for the critic.
 
 ## Size the work
 
-- **Triage** before changing anything, against the principles and [slop.md](references/slop.md), and say which it is: heavy (many tells, or the structure is wrong: work Full), light (a few misses: fix only those and keep the look), or clean (say so, offer at most three refinements with exact values, and apply them only when the user agrees). Never change a good screen just to make it different.
-- **Quick:** a tweak to a part or a region (a chip, a menu, a gap, an alignment, a width). Run `measure.sh` on the region, change it, run it again, look at both overlays, and hand over before and after. No lens files, no critic.
+- **Baseline.** Every task, Quick or Full, starts with `measure.sh` on the screen as it is (for a new screen, the neighbor it joins), before reading a lens file or changing code: once on the whole shell, so pane bands and the rail show, then on the region you change. Every before and after compares against it.
+- **Triage** before changing anything, against the principles and [slop.md](references/slop.md), text volume first (`count.js` `volume`): too much text is the most common miss, and no alignment fix repairs it. Say which it is: heavy (many tells, or the structure is wrong: work Full), light (a few misses: fix only those and keep the look), or clean (say so, offer at most three refinements with exact values, and apply them only when the user agrees). Never change a good screen just to make it different.
+- **Quick:** a tweak to a part or a region (a chip, a menu, a gap, an alignment, a width). Change it from the baseline, run `measure.sh` again, look at both overlays, and hand over before and after. No lens files, no critic.
 - **Full:** a new screen, a flow, a rework, an exploration, or a click dummy. Two gates, in order, then the critic:
-  1. **Structure and layout.** Where things live and how they nest (the Structure lens), then the frame, the regions, their order, and what each holds. For a new screen, a flow, or a layout change, show the direction and a greyscale wireframe (grey boxes, text as bars, real content order) and let the user pick; skip that when the layout is settled or the user says to go ahead.
+  1. **Structure and skeleton.** Where things live and how they nest (the Structure lens), then the [skeleton](references/layout.md#skeleton): frame, regions, bands, keylines, each region's axis, and what leads in each, written down before any part is styled. For a new screen, a flow, or a layout change, show the direction and a greyscale wireframe drawn from the skeleton (grey boxes, text as bars, real content order) and let the user pick; skip that when the layout is settled or the user says to go ahead.
   2. **Parts.** Once the layout holds, region by region: spacing, then color and icons, then words, then type, then detail and motion. Words come before type because a label's length decides its size; motion comes last because it fits a screen that already works without it.
 
   Say which gate each answer is at, and park a part note while the layout is open. Fix a problem at the level that owns it: an item in the wrong place is a structure fix, a misplaced region a layout fix, a one-off color a token fix.
@@ -56,7 +59,7 @@ The rubric for every lens and for the critic.
 
 Pick the mode that fits; a task can mix two, such as a new feature inside a rework. A click dummy, wireframe, or configurator follows [click-dummy.md](references/click-dummy.md).
 
-- **Explore** a new area or an open brief. Before drawing, list the axes a direction can change: structure (layout topology, the dominant element), order (what comes first), density, emphasis, type, words, and the pattern. Draft three to five directions, each committed to a different axis, the rest following from it; directions that differ only in tint, weight, or chip style are one direction. One direction is the known pattern played straight, and the current design joins as Current. Let one direction sound wrong. The settled decisions and the access checks of the Detail lens hold in every direction. Present them side by side with what each gets right and what it costs, and recommend one.
+- **Explore** a new area or an open brief. Before drawing, list the axes a direction can change: structure (layout topology, the dominant element), order (what comes first), density, emphasis, type, words, and the pattern. Draft three to five directions, each committed to a different axis, the rest following from it; directions that differ only in tint, weight, or chip style are one direction. Draw each as a greyscale wireframe first: two wireframes with the same masses are one direction. One direction is the known pattern played straight, and the current design joins as Current. Let one direction sound wrong. The settled decisions and the access checks of the Detail lens hold in every direction. Present them side by side with what each gets right and what it costs, and recommend one.
 - **Consistency pass** on a code base whose screens have drifted apart: tokens first, then parts, then layouts, as [foundations.md](references/foundations.md#consistency-pass) describes.
 - **New feature** in an existing product. List the jobs it does (pick one, connect a system, show progress). For each, decide: reuse, add a variant, or add a part to the library, with one line of reason. Mark each part of the proposal as existing, changed, or new. Take the best existing solution, even when the nearest screen does it worse. Enter from a place users already pass; lead to where they go next.
 - **Rework** of screens that work but look unsettled. Write down what works and what users rely on, and keep both; map every complaint to one fix; keep every capability unless the owner cuts it. Loop short: one problem, fix, measure, look. Refine inside the settled concept; a new concept is an exploration and needs the owner's go. Show before and after per screen, one line per change. While the user iterates on visuals, they are the critic.
@@ -70,11 +73,11 @@ Each lens is a checklist for one topic. Run the ones the change touches; on a Fu
 | --- | --- | --- | --- |
 | 1 Structure | Places and homes, expose or nest, tabs, lists, sheets, links, URLs, similar things in similar places | [structure.md](references/structure.md) | A walk of the three main tasks |
 | 2 Foundations | Follows the system, few variants, type, color, lines, contrast, dark | [foundations.md](references/foundations.md) | `count.js` contrast, inventory, `offTokenValues` |
-| 3 Components | Reuse, composable parts, the expected pattern, one look per object, parts in a region, inner balance | [components.md](references/components.md) | `count.js` sibling, control, buttons, controls, icons |
-| 4 Layout | Grey boxes, frames, containers, depth, separation, white space, balance, far view | [layout.md](references/layout.md) | `view.js` bands, wireframe, textonly, lead |
-| 5 Hierarchy | First, second, third per level, groups, act where you look, what each level shows, cut | [hierarchy.md](references/hierarchy.md) | `view.js` lead, notext; `count.js` text |
+| 3 Components | Reuse, composable parts, the expected pattern, one look per object, one shape language, parts in a region, inner and optical balance | [components.md](references/components.md) | `count.js` sibling, control, shape, square, buttons, controls, icons |
+| 4 Layout | Skeleton, grey boxes, frames, placement, containers, depth, separation, white space, balance, far view | [layout.md](references/layout.md) | `view.js` bands, wireframe, textonly, lead; `redline.js` band |
+| 5 Hierarchy | First, second, third per level, emphasis budget, text volume, groups, act where you look, what each level shows, cut | [hierarchy.md](references/hierarchy.md) | `view.js` lead, notext; `count.js` volume, large, text |
 | 6 Detail | Length, density, variance with intent, states, zero data, speed, motion, feedback, browser, access | [detail.md](references/detail.md) | `view.js` long, many; `count.js` contrast, unnamed, smallTargets, text.valueFormats |
-| 7 Alignment | Shared edges, text styles per region, spacing scale, rhythm | [alignment.md](references/alignment.md) | `redline.js`; `view.js` bands, grid |
+| 7 Alignment | One axis per region, shared edges, list columns, bands across panes, indents, text styles per region, spacing scale, rhythm | [alignment.md](references/alignment.md) | `redline.js` edge, axis, band, indent; `view.js` bands, grid |
 | 8 Words | Plain, consistent, needed, works as text alone | [words.md](references/words.md) | `count.js` text |
 | 9 Polish | Spot checks, before and after, clean code, the best we can do | [polish.md](references/polish.md) | Every tool, once |
 
@@ -85,7 +88,7 @@ Each lens is a checklist for one topic. Run the ones the change touches; on a Fu
 
 Fresh eyes on a Full task once the lenses hold. Skip it while the user is iterating on visuals: then they are the critic.
 
-- Give a fresh sub-agent the screenshots, the user's question in their words, and the settled decisions as fixed: no code, no reasoning, no account of what you meant. A new sub-agent each round.
+- Give a fresh sub-agent the screenshots with the `redline.png` overlay of each, the user's question in their words, and the settled decisions as fixed: no code, no reasoning, no account of what you meant. A new sub-agent each round.
 - Ask for the weakest spots, most severe first, each as: where on the screen, what fails, which user goal or principle it hurts, and the fix. A point without a fix is not a finding. Ask it to flag anything that looks generic or machine-made in the same form, and to answer the template check: with another product's name on it, would the screen still fit? A clean critique is a valid answer.
 - Fix and ask again. Stop after two rounds; a third round means the layout gate was wrong. Keep the stop rule out of the critic's prompt.
 - Without sub-agents, critique the screenshots yourself, as if seeing them for the first time.

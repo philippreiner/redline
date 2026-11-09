@@ -33,6 +33,8 @@ Adapted from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([
 - One-off values (13, 7, 31) → steps of the scale, on the 4px grid.
 - Rows of one list with different heights or gaps, sibling cards with different padding → one of each.
 - A group closer to its neighbor than to its own items → smaller gaps inside groups than between them.
+- A button floating centered under start-aligned content → on the column's start edge or at its row's end.
+- Pane headers at different heights, hairlines that step from pane to pane → one band height across the shell.
 
 ## Words
 
@@ -49,6 +51,7 @@ Adapted from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([
 - Glowing pills for counts, plans, or shortcuts → quiet text or a keycap.
 - "New ✨", "PRO", "Beta 🚀" on many items → remove, or one quiet text badge.
 - Everything a full pill, from search to cards → radius by size, nested ([foundations.md](foundations.md#lines-shapes-and-icons)).
+- Pill and rectangle buttons side by side, controls in three heights in one bar → one shape and one height per role.
 - An icon in a tinted circle on every card, an eyebrow over every title, tags on everything → cut what does not carry information; a tag stays where it is a property people filter or act on.
 - Containers with borders inside containers, a divider between every row → space groups first, then a tonal fill, a line only between fixed regions.
 - Over-detailed parts: every row with meta, icons, badges, and a second line → the one primary text, one value, and one mark the row needs.

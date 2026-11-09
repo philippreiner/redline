@@ -33,6 +33,29 @@
 // different distance apart from row to row. Across columns, a card top, card bottom, or heading
 // baseline 1 to 12px off its like in the column beside is an `edge` check (axis y); farther is a
 // layout decision. Also `inset`, a text start 9 to 16px inside the guide its column-mates share.
+// A painted item among more unpainted twins of its kind (a selected row, an active tab) is a state:
+// no box, no container; its contents keep their starts. Ink is where a thing shows: a control,
+// icon, image, or painted box up to 32px by its box, text by its glyphs, a ghost button by its glyph.
+// Shells: panes are columns side by side, 70% or more of the layer's height; a pane's header band is
+// its first block when that sits at its top, spans 90% of its width, and is 24 to 72px tall. `band`:
+// a header 1 to 12px off the height most share (of two, the right one moves), fixed by padding-block
+// when its height is auto, else height; at one height, content centred 2 to 12px off the others'
+// (align-items, even padding-block). With three or more panes, a pane whose content inset (left: the
+// x most of its starts share; right: the content edge its blocks stretch to) is 2 to 8px off what
+// most panes use is one `inset`, and its column's misses toward the odd inset are dropped.
+// `axis`: in a stack of three or more blocks, a narrower block centred (within 2px) where two or
+// more start on the content edge, or on the edge where two or more are centred; the fix is how the
+// layout places it (align-self, justify-self, margin-inline, justify-content, text-align). Trailing edges: in rows up to 48px tall with children side by side,
+// the last child pushed to the end (a growing sibling, an auto margin, or 12px of space), up to 120
+// by 32px (badge, count, time, chevron, icon button; a header's action counts with its rows), ends
+// on one right edge per column and container: with three or more, one 1 to 8px off the line three
+// or more and most share is an `edge` miss (axis end) against those of its kind, and other misses on
+// these items are dropped. `indent`: tree rows (the outermost blocks 20 to 44px tall reaching within
+// 32px of their column's right edge) start at their first ink; with two levels or more (two rows
+// each, more than 8px apart) per column and container, a row 1 to 8px off the x three or more of its
+// level share (most of it, two of its own kind) is a miss, fixed by the property that differs; so is
+// a child 1 to 8px off its parent's label (its text after an icon; both rows of one kind), fixed by
+// the indenting container's padding-left on every container of its kind with that step.
 // These are minimum checks, the floor of a review, not the review: the overlay is what to look
 // at. Checks (the contract: kind, where, text, against, off = mover minus reference, fix, count,
 // score, apply) fold a repeated row or card into one; `where` names the element the fix edits and
@@ -353,13 +376,43 @@
       end: !seam(el, r, el.nextElementSibling, "Right"),
     });
 
+    const state = (n) => {
+      const p = n.parentElement,
+        tw = p && paintedBox(n) ? [...p.children].filter((k) => k !== n && kindOf(k) === kindOf(n)) : [];
+      return tw.filter((k) => !paintedBox(k)).length > tw.filter(paintedBox).length;
+    };
+    const holderOf = (el) => {
+      let h = container(el);
+      while (h && state(h)) h = container(h);
+      return h;
+    };
+    const ink = (el, own = true) => {
+      const rs = [];
+      const go = (n, top) => {
+        if (!shown(n) || skip(n)) return;
+        const q = n.getBoundingClientRect();
+        if ((own || !top) && (n.matches(`${CONTROL}, img, svg, video, canvas`) || (painted(n) && (q.height <= 32 || top)))) return void (q.width && q.height && rs.push(q));
+        for (const c of n.childNodes)
+          if (c.nodeType === 1) go(c, false);
+          else if (c.nodeType === 3 && c.nodeValue.trim()) {
+            const range = document.createRange();
+            range.selectNodeContents(c);
+            rs.push(...[...range.getClientRects()].filter((x) => x.width && x.height));
+          }
+      };
+      go(el, true);
+      if (!rs.length) return null;
+      const [l, t, r, b] = [Math.min(...rs.map((q) => q.left)), Math.min(...rs.map((q) => q.top)), Math.max(...rs.map((q) => q.right)), Math.max(...rs.map((q) => q.bottom))];
+      return { left: l, top: t, right: r, bottom: b, width: r - l, height: b - t };
+    };
+
     // A start: an element or text run with its left (x), right (end), top, and bottom edges, null
     // where nothing is drawn. kind: text, box, media, edge (container, divider, photo, table), or
     // tcol (a table column). Its scope is its column and level (in a card or not).
     const starts = [];
     const start = (el, r, kind, { x = 1, end = 1, top = 1, bot = 1 } = {}, at = el) => {
       const col = column(at),
-        holder = container(at);
+        holder = holderOf(at);
       starts.push({
         el,
         r,
@@ -404,6 +457,7 @@
         }
         continue;
       }
+      if (!el.matches(CONTROL) && state(el)) continue;
       const box = el.matches(CONTROL) || (r.height <= 48 && (r.width <= L.width / 2 || !!el.querySelector("input, select, textarea")) && painted(el));
       const media = el.matches("img, video, picture, svg");
       if (!box && !media) {
@@ -1057,6 +1111,188 @@
         });
       }
 
+    const prune = (f) => misses.splice(0, misses.length, ...misses.filter((m) => !f(m)));
+    const panes = [...columns].filter((c) => inView(c.getBoundingClientRect()) && c.getBoundingClientRect().height >= 0.7 * L.height);
+    const bandOf = (P) => {
+      const R = P.getBoundingClientRect();
+      for (let n = P, d = 0; d < 3; d++) {
+        const k = [...n.children].find((x) => x.getClientRects().length && shown(x)),
+          q = k?.getBoundingClientRect();
+        if (!q || Math.abs(q.top - R.top) > 1 || q.width < 0.9 * R.width) return null;
+        if (q.height >= 24 && q.height <= 72 && q.height < R.height / 4) return ink(k, false) ? k : null;
+        n = k;
+      }
+      return null;
+    };
+    const bands = [],
+      bandEls = new Set(),
+      paneInsets = [];
+    for (const set of [...new Set(panes.map((p) => p.parentElement))].map((p) => panes.filter((c) => c.parentElement === p)).filter((s) => s.length >= 2)) {
+      const got = set.flatMap((P) => {
+        const b = bandOf(P),
+          r = b?.getBoundingClientRect(),
+          k = b && ink(b, false);
+        return b ? [{ P, b, r, top: Math.round(P.getBoundingClientRect().top), h: Math.round(r.height), mid: Math.round((k.top + k.bottom) / 2 - r.top) }] : [];
+      });
+      got.forEach((g) => bandEls.add(g.b));
+      if (got.length >= 2 && got.every((g) => Math.abs(g.top - got[0].top) <= 1))
+        for (const key of ["h", "mid"]) {
+          const votes = (v) => got.filter((g) => Math.abs(g[key] - v) <= 1).length,
+            ref = [...got].sort((a, b) => votes(b[key]) - votes(a[key]) || a.r.left - b.r.left)[0];
+          for (const g of got) {
+            const off = g[key] - ref[key];
+            if (g === ref || Math.abs(off) < (key === "h" ? 1 : 2) || Math.abs(off) > 12 || (got.length > 2 && votes(g[key]) >= votes(ref[key])) || bands.some((b) => b.s.el === g.b)) continue;
+            const y = (x) => Math.round(key === "h" ? x.r.bottom : x.r.top + x.mid);
+            bands.push({ s: { el: g.b, r: g.r, kind: "edge", label: textOf(g.b, g.r) }, key, axis: "y", at: y(g), guide: y(ref), off, refs: [{ el: ref.b, r: ref.r }], ref, n: votes(ref[key]) });
+          }
+        }
+      if (set.length < 3) continue;
+      const ins = set.flatMap((P) => {
+        const own = starts.filter((s) => s.col === P && !s.holder && s.x !== null && /text|box|media/.test(s.kind));
+        if (own.length < 3) return [];
+        const [at, ms] = [...group(own.map((s) => ({ s, at: s.x })))].sort(([a, p], [b, q]) => q.length - p.length || a - b)[0];
+        const R = P.getBoundingClientRect(),
+          edge = rightEdge(P, ms[0].s.el);
+        return [{ P, at, x: at - Math.round(R.left), end: Math.round(R.right - px(P, "borderRightWidth") - contentRight(edge)), edge, s: ms[0].s }];
+      });
+      for (const a of ins)
+        for (const side of ["x", "end"]) {
+          const votes = (v) => ins.filter((b) => Math.abs(b[side] - v) <= 1).length,
+            ref = [...ins].sort((p, q) => votes(q[side]) - votes(p[side]))[0],
+            off = a[side] - ref[side],
+            at = Math.round(contentRight(a.edge)),
+            against = `${sel(ref.P)}, content ${ref[side]}px from its ${side === "x" ? "left" : "right"} edge, and ${votes(ref[side]) - 1} more panes within 1px of it`;
+          if (votes(ref[side]) < 2 || votes(a[side]) >= votes(ref[side]) || Math.abs(off) < 2 || Math.abs(off) > 8) continue;
+          if (side === "end") paneInsets.push({ s: { el: a.edge, r: a.edge.getBoundingClientRect(), kind: "text" }, axis: "end", at, guide: at + off, off: -off, refs: [{ el: ref.edge, r: ref.edge.getBoundingClientRect() }], against });
+          else {
+            paneInsets.push({ s: a.s, axis: "x", at: a.at, guide: a.at - off, off, refs: [ref.s], against });
+            prune((m) => m.axis === "x" && m.s.col === a.P && m.guide === a.at);
+          }
+        }
+    }
+    for (let i = xcols.length - 1; i >= 0; i--) if (bandEls.has(xcols[i].s.el) || bandEls.has(xcols[i].refs[0].el)) xcols.splice(i, 1);
+
+    const axes = [];
+    const how = (k, P, to) => {
+      const ps = getComputedStyle(P),
+        cs = getComputedStyle(k),
+        full = k.getBoundingClientRect().width >= P.clientWidth - px(P, "paddingLeft") - px(P, "paddingRight") - 1;
+      if (!full && /flex/.test(ps.display) && /column/.test(ps.flexDirection)) return ["align-self", to === "start" ? "flex-start" : "center", "alignSelf"];
+      if (!full && /grid/.test(ps.display)) return ["justify-self", to, "justifySelf"];
+      if (!full && `${k.computedStyleMap?.().get("margin-left")}` === "auto") return ["margin-inline", to === "start" ? "0px" : "auto", "marginLeft"];
+      if (/flex/.test(cs.display) && !/column/.test(cs.flexDirection)) return ["justify-content", to === "start" ? "flex-start" : "center", "justifyContent"];
+      return ["text-align", to === "start" ? "left" : "center", "textAlign"];
+    };
+    for (const P of [layer, ...layer.querySelectorAll("*")]) {
+      const R = P.getBoundingClientRect();
+      if (R.width < 120 || !inView(R) || P.closest("table") || skip(P) || !shown(P)) continue;
+      const items = [...P.children]
+        .filter((k) => shown(k) && !skip(k))
+        .map((k) => ({ k, q: ink(k) }))
+        .filter((i) => i.q && inView(i.q));
+      if (items.length < 3 || items.some((i, j) => j && i.q.top < items[j - 1].q.bottom - 1)) continue;
+      const a = R.left + px(P, "borderLeftWidth") + px(P, "paddingLeft"),
+        b = R.right - px(P, "borderRightWidth") - px(P, "paddingRight"),
+        c = (a + b) / 2;
+      const narrow = (i) => i.q.width < b - a - 16,
+        onStart = (i) => Math.abs(i.q.left - a) <= 1,
+        onMid = (i) => narrow(i) && !onStart(i) && Math.abs((i.q.left + i.q.right) / 2 - c) <= 2;
+      const L1 = items.filter(onStart),
+        C1 = items.filter(onMid);
+      const [m, to, refs] =
+        L1.length >= 2 && C1.length === 1 ? [C1[0], "start", L1] : C1.length >= 2 && L1.length === 1 && narrow(L1[0]) && Math.abs((L1[0].q.left + L1[0].q.right) / 2 - c) > 8 ? [L1[0], "center", C1] : [];
+      if (!m) continue;
+      const [property, value, p] = how(m.k, P, to),
+        off = Math.round(to === "start" ? m.q.left - a : m.q.left - (c - m.q.width / 2));
+      axes.push({ s: { el: m.k, r: m.q, kind: "box", label: textOf(m.k, m.q) }, axis: "x", at: Math.round(m.q.left), guide: Math.round(m.q.left - off), off, refs: refs.map((i) => ({ el: i.k, r: i.q })), P, to, property, value, p });
+    }
+
+    const rowsIn = new Map();
+    for (const R of layer.querySelectorAll("*")) {
+      const q = R.getBoundingClientRect();
+      if (q.height > 48 || q.width < 120 || !inView(q) || R.closest("table") || skip(R) || !shown(R)) continue;
+      const kids = [...R.children]
+        .filter((k) => shown(k) && k.getClientRects().length)
+        .map((k) => ({ k, r: k.getBoundingClientRect() }))
+        .sort((x, y) => x.r.left - y.r.left);
+      if (kids.length < 2 || kids.some((k, i) => i && (k.r.left < kids[i - 1].r.right - 1 || Math.min(k.r.bottom, kids[i - 1].r.bottom) <= Math.max(k.r.top, kids[i - 1].r.top)))) continue;
+      const T = kids[kids.length - 1],
+        t = ink(T.k),
+        p = ink(kids[kids.length - 2].k);
+      const pushed =
+        kids.slice(0, -1).some((k) => parseFloat(getComputedStyle(k.k).flexGrow) > 0) || `${T.k.computedStyleMap?.().get("margin-left")}` === "auto" || (t && p && t.left - p.right >= 12);
+      if (!t || !pushed || T.r.width > 120 || T.r.height > 32) continue;
+      const key = [column(R), holderOf(R)],
+        g = [...rowsIn.keys()].find((x) => x[0] === key[0] && x[1] === key[1]) || key;
+      rowsIn.set(g, [...(rowsIn.get(g) || []), { el: T.k, r: t, at: Math.round(t.right), kind: painted(T.k) || T.k.matches(CONTROL) ? "box" : "text", label: textOf(T.k, t) }]);
+    }
+    for (const [[col, holder], got] of rowsIn) {
+      const votes = (v) => got.filter((g) => Math.abs(g.at - v) <= 1).length,
+        mode = [...got].sort((x, y) => votes(y.at) - votes(x.at) || y.at - x.at)[0].at,
+        refs = got.filter((g) => g.at === mode);
+      if (got.length < 3 || refs.length < 3 || votes(mode) <= got.length / 2) continue;
+      prune((m) => m.axis !== "y" && got.some((g) => g.el === m.s.el || g.el.contains(m.s.el) || m.s.el.contains(g.el)));
+      const off = got.filter((g) => Math.abs(g.at - mode) >= 1 && Math.abs(g.at - mode) <= 8);
+      for (const g of off) {
+        const same = refs.filter((r) => kindOf(r.el) === kindOf(g.el));
+        misses.push({ s: { ...g, col, holder }, axis: "end", at: g.at, guide: mode, off: g.at - mode, refs: same.length ? same : refs, cell: true, trail: true });
+      }
+      if (off.length) ends.push({ x: mode - 1, n: refs.length, top: Math.min(...got.map((g) => g.r.top)) - 4, bottom: Math.max(...got.map((g) => g.r.bottom)) + 4 });
+    }
+
+    const indents = [];
+    const treeRows = new Map();
+    for (const E of layer.querySelectorAll("*")) {
+      const q = E.getBoundingClientRect(),
+        col = column(E),
+        C = col.getBoundingClientRect();
+      if (q.height < 20 || q.height > 44 || q.right < C.right - 32 || !inView(q) || E.closest("table") || skip(E) || !shown(E) || !E.textContent.trim() || /^(inline|contents)/.test(getComputedStyle(E).display)) continue;
+      let up = E.parentElement;
+      while (up && up !== col && !treeRows.has(up)) up = up.parentElement;
+      if (up && up !== col) continue;
+      const k = ink(E, false);
+      if (!k) continue;
+      treeRows.set(E, { el: E, r: k, x: Math.round(k.left), key: [col, holderOf(E)], label: textOf(E, k) });
+    }
+    const trees = new Map();
+    for (const t of treeRows.values()) {
+      const g = [...trees.keys()].find((x) => x[0] === t.key[0] && x[1] === t.key[1]) || t.key;
+      trees.set(g, [...(trees.get(g) || []), t]);
+    }
+    for (const list of trees.values()) {
+      const levels = [];
+      for (let rest = [...list]; rest.length; ) {
+        const votes = (x) => rest.filter((r) => Math.abs(r.x - x) <= 1).length,
+          x = [...rest].sort((a, b) => votes(b.x) - votes(a.x) || a.x - b.x)[0].x,
+          rows = rest.filter((r) => Math.abs(r.x - x) <= 8);
+        levels.push({ x, n: votes(x), rows });
+        rest = rest.filter((r) => !rows.includes(r));
+      }
+      if (levels.filter((l) => l.rows.length >= 2).length < 2) continue;
+      for (const l of levels) {
+        if (l.n < 3 || l.n <= l.rows.length / 2) continue;
+        for (const r of l.rows.filter((r) => Math.abs(r.x - l.x) >= 1)) {
+          const refs = l.rows.filter((q) => Math.abs(q.x - l.x) <= 1 && kindOf(q.el) === kindOf(r.el));
+          if (refs.length < 2) continue;
+          indents.push({ s: { el: r.el, r: r.r, kind: "text", label: r.label }, axis: "x", at: r.x, guide: l.x, off: r.x - l.x, refs, against: `${sel(named(refs[0].el))} "${refs[0].label}" and ${refs.length - 1} more rows of its level at x ${l.x}` });
+        }
+      }
+      const sorted = [...list].sort((a, b) => a.r.top - b.r.top);
+      sorted.forEach((r, i) => {
+        const parent = sorted
+          .slice(0, i)
+          .reverse()
+          .find((p) => p.x < r.x - 8);
+        const n = parent && firstText(parent.el),
+          lr = n && firstRect(n);
+        if (!lr || lr.left - parent.x < 4 || kindOf(parent.el) !== kindOf(r.el) || indents.some((m) => m.s.el === r.el)) return;
+        const off = Math.round(r.x - lr.left);
+        if (Math.abs(off) >= 1 && Math.abs(off) <= 8)
+          indents.push({ s: { el: r.el, r: r.r, kind: "text", label: r.label }, axis: "x", at: r.x, guide: Math.round(lr.left), off, refs: [{ el: n.parentElement, r: lr, label: short(n.nodeValue) }], parent: parent.el, against: `the label of its parent row ${sel(named(parent.el))} "${short(n.nodeValue)}" at x ${Math.round(lr.left)}` });
+      });
+    }
+    prune((m) => m.axis === "x" && indents.some((i) => i.s.el.contains(m.s.el)));
+
     // Fix: the property that differs. Walk the mover's and a reference's paths down from their common
     // ancestor and find the padding, margin, or border whose difference equals the offset; else
     // move the mover by its own margin, or by left or top when it is absolutely positioned.
@@ -1179,10 +1415,12 @@
       // A table column's line, and a start's own card's content edge its card-mates sit on, are strong references.
       const strongRef = m.refs.length >= 4 || m.refs.some((s) => s.kind === "edge") || m.cell,
         onPad = m.axis !== "y" && m.s.kind !== "tcol" && m.s.holder && Math.abs(padEdge(m.s.holder, m.axis) - m.guide) <= 1;
+      const fix = propFix(m);
+      if (m.trail && document.querySelectorAll(sel(fix.el)).length > 1) fix.where = exact([fix.el]) || undefined;
       add(
         "edge",
         m,
-        propFix(m),
+        fix,
         (Math.abs(m.off) <= 3 && !onPad ? 0.4 : 0.5) +
           (strongRef ? 0.1 : 0) +
           (big(m.s) ? 0.1 : 0) -
@@ -1406,6 +1644,70 @@
         `${sel(named(ref.el))} "${ref.label || textOf(ref.el, ref.r)}", the ${what} beside it in the next column, at y ${m.guide}`,
       );
     }
+    const bandFix = (m) => {
+      const el = m.s.el,
+        cs = getComputedStyle(el);
+      const d = m.ref.h - Math.round(m.s.r.height),
+        [pt, pb] = [px(el, "paddingTop"), px(el, "paddingBottom")];
+      if (m.key === "mid") {
+        const out = [...(/flex|grid/.test(cs.display) && !/center/.test(cs.alignItems) ? [{ property: "align-items", value: "center" }] : []), ...(pt !== pb ? [{ property: "padding-block", value: `${(pt + pb) / 2}px` }] : [])];
+        return out.length ? out : null;
+      }
+      if (`${el.computedStyleMap?.().get("height")}` === "auto" && pt + Math.floor(d / 2) >= 0 && pb + Math.ceil(d / 2) >= 0)
+        return pt === pb && d % 2 === 0
+          ? [{ property: "padding-block", value: `${pt + d / 2}px` }]
+          : [
+              { property: "padding-top", value: `${pt + Math.floor(d / 2)}px` },
+              { property: "padding-bottom", value: `${pb + Math.ceil(d / 2)}px` },
+            ];
+      return [{ property: "height", value: `${m.ref.h - (cs.boxSizing === "border-box" ? 0 : pt + pb + px(el, "borderTopWidth") + px(el, "borderBottomWidth"))}px` }];
+    };
+    const bandDecls = bands.map(bandFix);
+    for (const [i, m] of bands.entries()) {
+      const decls = bandDecls[i],
+        els = bands.filter((b, j) => JSON.stringify(bandDecls[j]) === JSON.stringify(decls)).map((b) => b.s.el),
+        o = decls && onto(els, decls),
+        ref = sel(m.ref.b);
+      const fix = !decls
+        ? { el: m.s.el, text: `Centre the content of ${sel(m.s.el)} on its band; it sits ${Math.abs(m.off)}px ${m.off > 0 ? "below" : "above"} the centre line of ${ref}.`, apply: [] }
+        : {
+            el: m.s.el,
+            text: `Set ${decls.map((d) => `${d.property} to ${d.value}`).join(" and ")} on ${o.on}; ${m.key === "h" ? `${m.n} pane headers are ${m.ref.h}px tall, so the bottom hairlines and centre lines meet across the panes` : `its content sits ${Math.abs(m.off)}px off the centre line of ${ref}`}.${o.note}`,
+            apply: o.apply,
+            markup: !!o.note,
+          };
+      add(
+        "band",
+        m,
+        fix,
+        Math.abs(m.off) >= 2 ? (m.key === "h" ? 0.65 : 0.55) : 0.45,
+        m.key === "h" ? `${ref} and ${m.n - 1} more pane headers, ${m.ref.h}px tall, bottom hairline at y ${m.guide}` : `the centre line of ${ref} at y ${m.guide}`,
+      );
+    }
+    for (const m of paneInsets) add("inset", m, propFix(m), 0.6, m.against);
+    for (const m of axes) {
+      const o = onto(holders(m.s.el, m.p), [{ property: m.property, value: m.value }], [target(m.s.el)]);
+      add(
+        "axis",
+        m,
+        { el: m.s.el, text: `Set ${m.property} to ${m.value} on ${o.on}; it ${m.to === "start" ? "is centred in" : "starts on the edge of"} ${sel(m.P)}, where ${m.refs.length} other blocks ${m.to === "start" ? `start at x ${m.guide}` : "are centred"}.${o.note}`, apply: o.apply, markup: !!o.note },
+        0.6,
+        `${sel(named(m.refs[0].el))} "${textOf(m.refs[0].el, m.refs[0].r)}" and ${m.refs.length - 1} more blocks of ${sel(m.P)}, ${m.to === "start" ? `starting at x ${m.guide}` : "centred"}`,
+      );
+    }
+    for (const m of indents) {
+      let fix = propFix(m),
+        c = m.parent;
+      while (c && !c.contains(m.s.el)) c = c.parentElement;
+      const box = c && chain(m.s.el, c).find((n) => px(n, "paddingLeft") > 0 && px(n, "paddingLeft") - m.off >= 0);
+      if (box) {
+        const v = Math.round(px(box, "paddingLeft") - m.off),
+          els = [...layer.querySelectorAll("*")].filter((n) => kindOf(n) === kindOf(box) && px(n, "paddingLeft") === px(box, "paddingLeft")),
+          o = onto(els, [{ property: "padding-left", value: `${v}px` }], [...new Set(els.map(target))]);
+        fix = { el: box, text: `Set padding-left to ${v}px on ${o.on}, so child rows start on their parent's label.${o.note}`, apply: o.apply, markup: !!o.note };
+      }
+      add("indent", m, fix, Math.abs(m.off) >= 2 ? 0.6 : 0.4, m.against);
+    }
     const checks = [...found.values()]
       .map((f) => {
         // A miss on both sides of one thing is one instance.
@@ -1463,6 +1765,10 @@
       ...leads.map((m) => [m, "baseline"]),
       ...pairs.map((m) => [m, "baseline"]),
       ...xcols.map((m) => [m, "edge"]),
+      ...bands.map((m) => [m, "edge"]),
+      ...axes.map((m) => [m, "edge"]),
+      ...indents.map((m) => [m, "edge"]),
+      ...paneInsets.map((m) => [m, "inset"]),
     ]
       .filter(([m]) => !dropped.has(m))
       .sort(([a], [b]) => (number.get(b) ? 1 : 0) - (number.get(a) ? 1 : 0) || Math.abs(b.off) - Math.abs(a.off))
@@ -1538,8 +1844,8 @@
     });
     // One thing off by the same amount on both sides is listed once.
     const once = (l) => l.filter((m, i) => !l.slice(0, i).some((o) => o.s.el === m.s.el && o.axis !== m.axis && o.axis !== "y" && m.axis !== "y" && Math.abs(o.off) === Math.abs(m.off)));
-    const near = once([...misses, ...cards].filter((m) => Math.abs(m.off) <= 3)),
-      far = once([...misses, ...cards, ...heads].filter((m) => Math.abs(m.off) > 3));
+    const near = once([...misses, ...cards, ...indents, ...paneInsets].filter((m) => Math.abs(m.off) <= 3)),
+      far = once([...misses, ...cards, ...heads, ...indents, ...paneInsets].filter((m) => Math.abs(m.off) > 3));
     last = JSON.stringify({
       ...(warning && { warning }),
       lines: lines.length + ends.length,

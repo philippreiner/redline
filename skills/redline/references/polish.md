@@ -12,6 +12,7 @@ Spot checks, once, after every lens holds. Each is a question; a "no" is a findi
 
 - Does `count.js` show every list under its cap, and no one-off that the change added? Does `measure.sh` print no minimum check, and do its images show nothing the checks missed?
 - Does each remaining difference mean something?
+- Does each region hold one axis, one shape per role, and its list's three columns, and do the pane headers share one band?
 - For a size or gap you doubt, try one step up and one step down the scale, and keep the one that looks right.
 
 ## Reuse and tokens
