@@ -36,7 +36,8 @@ Use the pattern an expert in the field expects: users bring habits from the tool
 - A state renders one way (chip, dot, or text) in every list, from one status vocabulary. A state mark shows only on the exception; the normal state shows nothing.
 - Each action keeps one word, one icon, and one shortcut everywhere.
 - A value is not a state: durations, counts, and dates are plain text, never chips.
-- Different roles look different: a decorative icon never looks clickable, a secondary action never wears the primary's fill, and two kinds of badge never share shape and color.
+- Different roles look different: a decorative icon never looks clickable, a secondary action never wears the primary's fill, and two kinds of badge never share shape and color. A property (status, goal, owner) shows as a chip or a select, an action as a button.
+- A checkbox shows only where something can be checked; an object's icon names the object.
 
 ## One shape language
 

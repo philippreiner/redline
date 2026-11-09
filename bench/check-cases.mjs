@@ -22,6 +22,7 @@ const screens = {
   "cmms-cut": ["cmms-cut.html#asset", "main"],
   controls: ["controls.html", "#seeded"],
   shell: ["shell.html", ".app"],
+  hierarchy: ["hierarchy.html", "#seeded"],
 };
 
 // [screen, check kind ("note": the first check under 0.5 with an apply), its text starts
@@ -142,6 +143,7 @@ const cases = [
   ["shell", "inset", "icon 16", "section.files > div.fbody { padding-left: 16px }", "FAIL", "half edit: the right inset stays 12px"],
   ["shell", "edge", "Mon", null, "CLEAN", "printed: the late time's padding"],
   ["shell", "edge", "4", null, "CLEAN", "printed: the Inbox badge's margin"],
+  ["hierarchy", "rank", "Wave 2 readiness", null, "CLEAN", "printed: the section title one step below the page title"],
 ];
 
 const session = process.env.AGENT_BROWSER_SESSION || "check-cases";

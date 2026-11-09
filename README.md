@@ -6,23 +6,27 @@ Your coding agent builds screens it never looks at. redline makes it look. The a
 npx skills add philippreiner/redline
 ```
 
-## One pass takes a shell from 12 checks to none
+## One pass takes a shell from 20 checks to none
 
 One four-pane app shell, before and after a pass with the skill. Pink lines mark edges that three or more things share; a red or orange box marks something 1 to 8px off one, with its offset.
 
-| Before: 12 checks | After: none |
+| Before: 20 checks | After: none |
 | --- | --- |
 | ![Redline overlay on the shell before](docs/shell-before.png) | ![Redline overlay on the shell after](docs/shell-after.png) |
 
-What the pass fixed:
+Alignment fixes:
 
-- Pane headers at 36, 40, and 44px now share one 40px band, so their hairlines run as one line.
-- "+ Event", centered under start-aligned fields, now starts on their edge.
-- One nav group indented 20px where the others use 16px, and one item sat 4px outside its column.
-- Times and badges ended 2 to 5px short of their right edge.
-- A pill button sat among 6px-radius ones.
-- Chat rows carried a title and two lines of preview; they now carry one short line.
-- Grey labels read below 4.5:1 contrast.
+- Pane headers at 36, 40, and 44px now share one 40px band.
+- Nav indents, times, and badges sit on their columns and right edges.
+- A pill button among 6px-radius ones now takes their shape.
+
+Hierarchy fixes, which a clean alignment run alone would have missed:
+
+- The section title "Wave 2 readiness" was as large as the page title, and a 40px figure competed with both. Now the page title leads, and the sections sit one step below it.
+- The page now opens with what needs the reader: workstreams sorted worst first, each with a health mark and its word.
+- "Actions 3" sat above "No actions due this week". The actions now show as rows, with one "Add action" at the end; "+ Event" moved to the Schedule tab.
+- The Files pane kept search in its header and "Add files" in its body. Both now sit in the header.
+- Checkbox squares sat in front of things nobody can check. They are now object icons.
 
 ## The agent measures before it styles
 
@@ -39,8 +43,8 @@ A project's own design rules, such as a `DESIGN.md`, are the defaults. Where one
 | --- | --- |
 | `skills/redline/SKILL.md` | The workflow: baseline, skeleton, parts, the modes (explore, consistency pass, new feature, rework, review), and a critic |
 | `skills/redline/references/` | Nine checklists (structure, foundations, components, layout, hierarchy, detail, alignment, words, polish), a pattern library, and click dummies |
-| `skills/redline/scripts/` | `redline.js` for edges, pane bands, axes, and indents; `count.js` for shapes, text volume, contrast, and the style inventory; `view.js` for spacing, wireframe, and stress views; `measure.sh` to run all three and rank the checks |
-| `bench/` | Screens with known defects, clean screens that must stay quiet, and 86 fix cases; not installed with the skill |
+| `skills/redline/scripts/` | `redline.js` for edges, pane bands, axes, and indents; `count.js` for shapes, text volume, type rank, action placement, contradictions, contrast, and the style inventory; `view.js` for spacing, wireframe, and stress views; `measure.sh` to run all three and rank the checks |
+| `bench/` | Screens with known defects, clean screens that must stay quiet, and 87 fix cases; not installed with the skill |
 
 ## The scripts run in any browser
 

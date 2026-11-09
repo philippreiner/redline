@@ -1,7 +1,7 @@
 // Count: is the screen crowded or inconsistent? One count of the layer (window.__axesLayer, else
 // the last open dialog or sheet, else main, else the body). It returns `checks`, the minimum checks
 // (the floor of a review, not the review; ranked, at most 20, numbered on the page and in the panel),
-// of eight kinds:
+// of twelve kinds:
 //   crowding  one action label on 4+ buttons in a column (a note, under 0.5).
 //   sibling   one of 4+ sibling containers of one kind (tag and first class) differs from the rest in
 //             fill or border, padding, or first-text style; or a few cells of one column in a table or
@@ -49,7 +49,24 @@
 //             holding text or 48px square and under a quarter of the view, an image, chart, or
 //             background image over a quarter; like ones that overlap down (a row of figures, a
 //             pair of solid buttons) count as one, and one inside another counts once. Four or more
-//             score 0.55, three is a note. `apply: []`.
+//             score 0.55; three score 0.5 when two text leads share a size (a section title as large
+//             as the page title), else a note. `apply: []`.
+//   rank      the outline breaks: a heading at least as large as its parent (the nearest earlier
+//             heading of a lower level in its column; a short bold or uppercase title after the
+//             column's h1 counts as its child) at 0.6, `apply` the font-size its same-level
+//             siblings take as a share of their parent's when more than half agree (with that
+//             sibling's line-height when it differs), else none; the
+//             two largest texts in view (1.25x body or more) at one size in different roles (h1,
+//             h2, figure, text), not already an outline check, at 0.55; a column whose texts
+//             outside rows, controls, and chips use five or more sizes at 0.5 (four is a note).
+//   placement a pane or card whose header holds actions while a lone button opens its body (0.55);
+//             two creation controls ("Add", "New", "Create", "+ word", or a plus icon with a name, or
+//             an input whose placeholder starts so; a form's submit is not one) in one section, the
+//             nearest ancestor whose first text is a title (0.55). No `apply`.
+//   contradiction a title ending in a count (N > 0, not "week 45" or a year) whose section, its
+//             following siblings up to the next title of its kind, shows no list items (li, rows,
+//             two or more like siblings with a class) or an empty-state line ("No …"). 0.6, no `apply`.
+//   repeat    a pane header's title (its first text, whole) equal to the pane's h1. 0.55, no `apply`.
 // `where` names the element holding the value (`div.rtime > span`), never a named ancestor. `apply`
 // is the fix as `[{ selector, property, value }]`; its selector comes from exact() and matches only
 // the elements the fix means (`[]` when none does, or when the fix is markup); the fix sentence
@@ -1381,21 +1398,231 @@
     else leads.push({ ...c, r, n: 1 });
   }
   const leadText = (l) => `${l.what} "${textOf(l.el).slice(0, 24)}"${l.n > 1 ? ` (a row of ${l.n})` : ""}`;
+  const leadSizes = leads.filter((l) => l.what === "text").map((l) => Math.round(sizeOf(l.el))),
+    leadTie = leadSizes.some((s, i) => leadSizes.indexOf(s) !== i);
   if (leads.length > 2)
     check({
       kind: "large",
       where: at(leads[0].el),
       text: textOf(leads[0].el),
-      against: `${leads.length} things compete to lead in view: ${leads.map(leadText).join(", ")}`,
+      against: `${leads.length} things compete to lead in view: ${leads.map(leadText).join(", ")}${leadTie ? `; two of them share ${leadSizes.find((s, i) => leadSizes.indexOf(s) !== i)}px` : ""}`,
       off: leads.length - 2,
       fix: `Keep one lead and at most one second; set the rest back: figures to the body size, a second solid button to an outline, an image under a quarter of the view (${leads
         .map((l) => at(l.el))
         .join(", ")}).`,
       count: leads.length,
-      score: leads.length >= 4 ? 0.55 : 0.4,
+      score: leads.length >= 4 ? 0.55 : leadTie ? 0.5 : 0.4,
       el: leads[0].el,
       apply: [],
     });
+
+  // 9. rank, placement, contradiction, repeat: the outline, where actions sit, and what a section says.
+  const LEVEL = "h1, h2, h3, h4, h5, h6, [role=heading]";
+  const level = (h) => (/^H\d$/.test(h.tagName) ? +h.tagName[1] : +h.getAttribute("aria-level") || 2);
+  const own = (e) => !e.closest(`${BUTTON}, ${CONTROL}, [role=tab], ${STATE}`) && !shaped.some((s) => s.el.contains(e));
+  const titleLike = (e) => {
+    const s = ownText.get(e) || "",
+      cs = getComputedStyle(e);
+    return own(e) && !inList(e) && words(s) <= 6 && /\p{L}{2}/u.test(s) && !isValue(s) && (!!e.closest(LEVEL) || +cs.fontWeight >= 600 || cs.textTransform === "uppercase");
+  };
+  const heads = all.filter((e) => e.matches(LEVEL) && !inList(e) && e.innerText.trim());
+  const parentOf = (h) => heads.findLast((p) => follows(p, h) && level(p) < level(h) && column(p) === column(h));
+  const quote = (e) => `${at(e)} "${cut(e.innerText.trim().replace(/\s+/g, " "), 32)}"`;
+  const outline = heads.map((h) => [h, parentOf(h)]);
+  for (const pt of heads.filter((h) => level(h) === 1))
+    for (const e of ordered) if (column(e) === column(pt) && follows(pt, e) && !e.closest(LEVEL) && titleLike(e) && sizeOf(e) >= sizeOf(pt) - 0.5) outline.push([e, pt]);
+  const outlined = new Set();
+  for (const [h, p] of outline) {
+    if (!p || sizeOf(h) < sizeOf(p) - 0.5) continue;
+    outlined.add(h).add(p);
+    const sibs = heads.filter((o) => o !== h && h.matches(LEVEL) && level(o) === level(h) && parentOf(o)),
+      stepOf = (o) => (sizeOf(o) < sizeOf(parentOf(o)) - 0.5 ? +(sizeOf(o) / sizeOf(parentOf(o))).toFixed(2) : 0),
+      steps = sibs.map(stepOf).filter(Boolean),
+      step = commonest(steps.slice()),
+      value = step && steps.filter((s) => s === step).length > sibs.length / 2 && `${Math.round(sizeOf(p) * step)}px`,
+      ref = value && getComputedStyle(sibs.find((o) => stepOf(o) === step)),
+      decl = value && { "font-size": value, ...(ref.fontSize === value && ref.lineHeight !== getComputedStyle(h).lineHeight ? { "line-height": ref.lineHeight } : {}) },
+      a = value && apply([h], decl);
+    check({
+      kind: "rank",
+      where: at(h),
+      text: textOf(h),
+      against: `its parent ${quote(p)} at ${sizeOf(p)}px`,
+      off: sizeOf(h) - sizeOf(p),
+      fix: value
+        ? `Set ${Object.entries(decl)
+            .map(([k, v]) => `${k} to ${v}`)
+            .join(", ")} on ${exactNames([h])[0]}; its ${steps.length} sibling titles take ${step}x their parent's size.${a ? "" : miss([h])}`
+        : `Make ${quote(h)} (${sizeOf(h)}px) a clear step smaller than ${quote(p)} (${sizeOf(p)}px); a section title as large as its page title reads as a second page.`,
+      count: 1,
+      score: 0.6,
+      el: h,
+      apply: a || [],
+    });
+  }
+  const roleOf = (e) => (e.closest(LEVEL) ? `h${level(e.closest(LEVEL))}` : isValue(ownText.get(e) || "") ? "figure" : "text");
+  const big = ordered.filter((e) => own(e) && shown(e.getBoundingClientRect()) && sizeOf(e) >= bodySize * 1.25).sort((a, b) => sizeOf(b) - sizeOf(a));
+  if (big.length > 1 && Math.abs(sizeOf(big[0]) - sizeOf(big[1])) < 0.5 && roleOf(big[0]) !== roleOf(big[1]) && !(outlined.has(big[0]) && outlined.has(big[1])))
+    check({
+      kind: "rank",
+      where: at(big[1]),
+      text: textOf(big[1]),
+      against: `the largest text in view, ${quote(big[0])}, a ${roleOf(big[0])} at the same ${sizeOf(big[0])}px`,
+      off: 0,
+      fix: `Size ${quote(big[1])} (${roleOf(big[1])}) and ${quote(big[0])} (${roleOf(big[0])}) apart so one leads; two roles at one size compete.`,
+      count: 2,
+      score: 0.55,
+      el: big[1],
+      apply: [],
+    });
+  for (const [col, ts] of Map.groupBy(
+    ordered.filter((e) => own(e) && !inList(e)),
+    column,
+  )) {
+    const sizes = [...Map.groupBy(ts, (e) => Math.round(sizeOf(e)))].sort((a, b) => b[0] - a[0]);
+    if (sizes.length > 3)
+      check({
+        kind: "rank",
+        where: sel(col),
+        text: textOf(col),
+        against: `${sizes.length} text sizes outside its rows: ${sizes.map(([s, es]) => `${s}px "${cut(ownText.get(es[0]), 20)}"`).join(", ")}`,
+        off: sizes.length - 3,
+        fix: `Keep three text sizes in ${sel(col)}, title, body, and meta, and set the other ${sizes.length - 3} onto them.`,
+        count: sizes.length,
+        score: sizes.length > 4 ? 0.5 : 0.4,
+        el: col,
+        apply: [],
+      });
+  }
+  const headerOf = (b) => {
+    const ks = [...b.children].filter((k) => visible(k) && k.getBoundingClientRect().height),
+      h = ks[0];
+    if (!h || ks.length < 2) return null;
+    const r = h.getBoundingClientRect();
+    return h.matches("header, [role=toolbar]") || (r.width >= b.getBoundingClientRect().width * 0.9 && r.height <= 64 && lined(getComputedStyle(h), "Bottom")) ? h : null;
+  };
+  const panes = [layer, ...columns, ...cards].filter((b) => layer.contains(b) && headerOf(b));
+  const nameOf = (e) => (e.innerText?.trim() || e.getAttribute("aria-label") || e.getAttribute("title") || "").replace(/\s+/g, " ");
+  for (const b of panes) {
+    const hd = headerOf(b),
+      acts = [...hd.querySelectorAll(BUTTON)].filter((e) => visible(e) && !e.matches(`[role=tab], ${STATE}`)),
+      body = [...b.children].filter((k) => follows(hd, k)),
+      things = all.filter((e) => body.some((k) => k.contains(e)) && (e.matches(`${BUTTON}, ${CONTROL}`) || (textEls.has(e) && !e.closest(`${BUTTON}, ${CONTROL}`)))),
+      f = things[0];
+    if (!acts.length || !f?.matches(BUTTON)) continue;
+    const fr = f.getBoundingClientRect();
+    if (things.some((e) => !f.contains(e) && e.getBoundingClientRect().top < fr.bottom && fr.top < e.getBoundingClientRect().bottom)) continue;
+    check({
+      kind: "placement",
+      where: at(f),
+      text: textOf(f),
+      against: `${sel(hd)} carries ${acts.length} actions (${acts.map((e) => `"${cut(nameOf(e), 16)}"`).join(", ")}) while this button sits alone atop the body`,
+      off: Math.round(fr.top - hd.getBoundingClientRect().bottom),
+      fix: `Move "${nameOf(f)}" into the trailing zone of ${sel(hd)}, beside ${and(acts.map((e) => `"${cut(nameOf(e), 16)}"`))}; one place for the pane's actions.`,
+      count: 1,
+      score: 0.55,
+      el: f,
+      apply: [],
+    });
+  }
+  const plus = (svg) => {
+    const u = svg.querySelector("use"),
+      src = u ? document.querySelector(u.getAttribute("href") || u.getAttribute("xlink:href")) : svg;
+    const pts = [...(src?.querySelectorAll("path, line, polyline") || [])].flatMap((g) => {
+      try {
+        const n = g.getTotalLength();
+        return Array.from({ length: 25 }, (_, i) => g.getPointAtLength((n * i) / 24));
+      } catch {
+        return [];
+      }
+    });
+    if (pts.length < 4) return false;
+    const xs = pts.map((p) => Math.round(p.x * 2) / 2),
+      ys = pts.map((p) => Math.round(p.y * 2) / 2),
+      [cx, cy] = [commonest(xs.slice()), commonest(ys.slice())],
+      w = Math.max(...xs) - Math.min(...xs),
+      t = w * 0.08;
+    return w > 0 && pts.every((p) => Math.abs(p.x - cx) <= t || Math.abs(p.y - cy) <= t) && [Math.min(...xs), Math.max(...xs)].every((x) => Math.abs(x - cx) > w / 3) && [Math.min(...ys), Math.max(...ys)].every((y) => Math.abs(y - cy) > w / 3);
+  };
+  const creates = all.filter(
+    (e) =>
+      (e.matches(`${BUTTON}, a[href]`) && nameOf(e) && !e.closest("form")?.querySelector("input:not([type=hidden], [type=checkbox], [type=radio]), textarea") && (/^(\+\s*\p{L}|add\b|new\b|create\b)/iu.test(nameOf(e)) || (e.querySelector("svg") && plus(e.querySelector("svg"))))) ||
+      (e.matches("input, textarea") && /^(add|new|create)\b/i.test(e.placeholder || "")),
+  );
+  const sectionOf = (e) => {
+    for (let n = e.parentElement; n && n !== layer; n = n.parentElement) {
+      if (columns.has(n)) return n;
+      const t = ordered.find((x) => n.contains(x) && own(x));
+      if (t && (titleLike(t) || t.closest(LEVEL))) return n;
+    }
+    return layer;
+  };
+  for (const [sec, cs] of Map.groupBy(creates, sectionOf)) {
+    if (cs.length < 2) continue;
+    const say = (e) => `"${cut(nameOf(e) || e.placeholder, 24)}" (${at(e)})`;
+    check({
+      kind: "placement",
+      where: at(cs[1]),
+      text: nameOf(cs[1]) || cs[1].placeholder,
+      against: `${cs.length} ways to add in ${sel(sec)}: ${and(cs.map(say))}`,
+      off: cs.length - 1,
+      fix: `Keep one way to add in ${sel(sec)}: fold ${and(cs.slice(1).map(say))} into ${say(cs[0])}, or into one Add menu.`,
+      count: cs.length,
+      score: 0.55,
+      el: cs[1],
+      apply: [],
+    });
+  }
+  const NOT_COUNT = /\b(week|wave|day|sprint|phase|release|version|v|step|stage|rack|hall|gate|level|year|quarter|q|kw|cw|round|part|chapter|section|page|room|floor|building)$/i;
+  const empty = (s) => words(s) <= 8 && /^(no|none|nothing|keine?|nichts)\b/i.test(s);
+  for (const t of new Set([...heads, ...ordered.filter(titleLike)].map((e) => e.closest(LEVEL) || e))) {
+    let row = t;
+    while (row.parentElement && row.parentElement !== layer && row.parentElement.innerText.trim() === row.innerText.trim()) row = row.parentElement;
+    const m = row.innerText
+      .trim()
+      .replace(/\s+/g, " ")
+      .match(/^(.*\p{L}.*?)\s+(\d+)$/u);
+    if (!m || +m[2] === 0 || +m[2] >= 1900 || NOT_COUNT.test(m[1]) || words(m[1]) > 5 || inList(row)) continue;
+    const sec = [];
+    for (let n = row.nextElementSibling; n && kindOf(n) !== kindOf(row); n = n.nextElementSibling) if (visible(n)) sec.push(n);
+    if (!sec.length) continue;
+    const items =
+      sec.some((n) => n.matches("li, tr, [role=listitem], [role=row], [role=option], article") || n.querySelector("li, tr, [role=listitem], [role=row], [role=option]") || [...rowEls].some((r) => n.contains(r))) ||
+      [...Map.groupBy(sec, kindOf)].some(([k, g]) => g.length >= 2 && k.includes("."));
+    const none = ordered.filter((e) => sec.some((n) => n.contains(e)) && own(e) && empty(ownText.get(e) || ""));
+    if (items && !none.length) continue;
+    check({
+      kind: "contradiction",
+      where: at(t),
+      text: textOf(row),
+      against: `the count ${m[2]} beside ${[!items && "no items", none.length && `"${ownText.get(none[0])}"`].filter(Boolean).join(" and ")} in its section`,
+      off: +m[2],
+      fix: `Show the ${m[2]} ${m[1].toLowerCase()} the count promises under ${quote(t)}${none.length ? `, and drop ${and(holders(none))} "${ownText.get(none[0])}"` : ""}; or, when they are filtered out, say so in the count.`,
+      count: 1 + none.length,
+      score: 0.6,
+      el: t,
+      apply: [],
+    });
+  }
+  const norm = (s) => s.trim().replace(/\s+/g, " ").toLowerCase();
+  for (const b of [layer, ...columns].filter((x) => layer.contains(x) && headerOf(x))) {
+    const hd = headerOf(b),
+      t = ordered.find((e) => hd.contains(e) && own(e)),
+      h1 = heads.find((h) => level(h) === 1 && b.contains(h) && !hd.contains(h) && column(h) === (b === layer ? layer : b));
+    if (t && h1 && norm(t.innerText) === norm(h1.innerText))
+      check({
+        kind: "repeat",
+        where: at(t),
+        text: textOf(t),
+        against: `the pane's h1 ${quote(h1)} right below it`,
+        off: 0,
+        fix: `Say "${ownText.get(t)}" once: drop it from ${sel(hd)} and keep the h1, or show the header title only once the h1 scrolls away.`,
+        count: 2,
+        score: 0.55,
+        el: t,
+        apply: [],
+      });
+  }
 
   // Rank, number, draw.
   const ranked = checks.sort((a, b) => b.score - a.score).slice(0, 20);
@@ -1404,7 +1631,7 @@
   host.id = "__count";
   host.style.cssText = "position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:2147483646";
   const root = host.attachShadow({ mode: "open" });
-  const COLOR = { crowding: "#d9480f", sibling: "#7048e8", control: "#0c8599", contrast: "#c2255c", shape: "#2b8a3e", square: "#1971c2", volume: "#862e9c", large: "#e67700" };
+  const COLOR = { crowding: "#d9480f", sibling: "#7048e8", control: "#0c8599", contrast: "#c2255c", shape: "#2b8a3e", square: "#1971c2", volume: "#862e9c", large: "#e67700", rank: "#a61e4d", placement: "#5f3dc4", contradiction: "#c92a2a", repeat: "#364fc7" };
   const marks = ranked.map((f, i) => {
     const r = f.el.getBoundingClientRect(),
       [x, y] = [r.left + scrollX, r.top + scrollY];

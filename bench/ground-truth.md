@@ -87,3 +87,19 @@ Aldermoor Logistics, Cloud Transformation. Region `#seeded`; the clean twin `#cl
 | 7 | `ul > li.update` | Rows carry a title, a two-line explanatory sentence, and meta | 4 lines, 3 styles |
 | 8 | `section.kpi > p.help`, `span.eyebrow` | Helper sentence under the card title; eyebrow above it | 14 words; 1 eyebrow |
 | 9 | `section#seeded` | Four leads in view: heading, row of 28px figures, solid Add, solid Open plan | 4, at most 2 wanted |
+
+## hierarchy.html
+
+Aldermoor Logistics, Cloud Transformation. Region `#seeded`; the clean twin `#clean` has no check at 0.5 or more.
+
+| # | Where | What is wrong |
+| --- | --- | --- |
+| 1 | `h2.wave` "Wave 2 readiness" | 28px, as large as the h1; its siblings are 18px |
+| 2 | `div.figure > b` "68 %" | Ties the h1 at 28px |
+| 3 | `section#seeded` | Three leads in view, two at 28px |
+| 4 | `section.detail` | Five text sizes |
+| 5 | `div.bar > button` "Add files" | Alone atop the body while the header holds Search and Close |
+| 6 | "Add an action" and "+ Event" | Two creation controls in one section |
+| 7 | "Actions 3" | No items, and "No actions due this week" |
+| 8 | "Open questions 2" | Followed by "No open questions" |
+| 9 | Header "Cloud Transformation" | Repeats the h1 |

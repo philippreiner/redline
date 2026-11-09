@@ -1,6 +1,6 @@
 # Bench
 
-A fixed regression set for the redline skill: three HTML fixtures rebuilt from real screens, with their known defects in [ground-truth.md](ground-truth.md), one fixed fixture, two click dummies (`recorder.html`, `cmms.html`), `scope.html` (two list headings that share one name, as on Antasar's Systems screen), `row.html` (four KPI cards, one title wraps and pushes its number down), which hold the fix cases, `seeded.html` (a portfolio review with eight seeded defects, listed in ground-truth.md), and `cmms-cut.html` (a CMMS screen whose date is cut short, which `view.js` must flag). `shell.html` (a four-pane app shell with seeded alignment defects) and `sidebar.html` (a clean Linear-like sidebar, which must stay quiet) hold the shell checks, `shell-after.html` (the shell with every defect fixed, the README's after image) must stay quiet, and `controls.html` (seeded shape, square, volume, and lead defects beside a clean twin) the count checks. It lives outside the skill, so an installed skill does not carry it. Rerun it after a change to the skill or its scripts.
+A fixed regression set for the redline skill: three HTML fixtures rebuilt from real screens, with their known defects in [ground-truth.md](ground-truth.md), one fixed fixture, two click dummies (`recorder.html`, `cmms.html`), `scope.html` (two list headings that share one name, as on Antasar's Systems screen), `row.html` (four KPI cards, one title wraps and pushes its number down), which hold the fix cases, `seeded.html` (a portfolio review with eight seeded defects, listed in ground-truth.md), and `cmms-cut.html` (a CMMS screen whose date is cut short, which `view.js` must flag). `shell.html` (a four-pane app shell with seeded alignment defects) and `sidebar.html` (a clean Linear-like sidebar, which must stay quiet) hold the shell checks, `shell-after.html` (the shell with every defect fixed, the README's after image) must stay quiet, `controls.html` (seeded shape, square, volume, and lead defects beside a clean twin) the count checks, and `hierarchy.html` (seeded rank, placement, contradiction, and repeat defects beside a clean twin) the hierarchy checks. It lives outside the skill, so an installed skill does not carry it. Rerun it after a change to the skill or its scripts.
 
 ## Scripts
 
@@ -19,6 +19,8 @@ $s --url bench/shell-after.html /tmp/bench/shell-after .app
 $s --compare /tmp/bench/shell /tmp/bench/shell-after
 $s --url bench/controls.html /tmp/bench/controls '#seeded'
 $s /tmp/bench/controls-clean '#clean'
+$s --url bench/hierarchy.html /tmp/bench/hierarchy '#seeded'
+$s /tmp/bench/hierarchy-clean '#clean'
 ```
 
 | Fixture | Signal | Expected |
@@ -38,6 +40,9 @@ $s /tmp/bench/controls-clean '#clean'
 | controls `#seeded` | `count.json` `checks` | `shape` on the toolbar pill, the form's square select, the card's square Share, and the capsule tag; `square` on More actions 28x24; `volume` on `ul > li.update` (median 4 lines) and on `section.kpi > p.help`; `large` with 4 leads |
 | controls `#seeded` | `count.json` `icons`, `text.volume` | `16x14 stroke 2.0 not square`; `eyebrows.count` 1, `helpers.count` 1 |
 | controls `#clean` | `count.json` `checks` | none |
+| hierarchy `#seeded` | `count.json` `checks` | `rank` on `h2.wave` (`apply` 18px), on `div.figure > b`, and on `section.detail` (5 sizes); `large` with 3 leads at 0.5; `placement` on `div.bar > button` and `button.event`; `contradiction` on `h3` "Actions 3" and `p.cap` "Open questions 2"; `repeat` on `div.title` |
+| hierarchy `#clean` | `count.json` `checks` | none at 0.5 or more |
+| shell | `count.json` `checks` | `rank` (h2 as large as h1), `large` 0.5, `placement` x2 (Add files, + Event), `contradiction` (Actions 3), `repeat` (title) |
 | sources-after | `redline.json` `checks` | no `band`, `axis`, or `indent` |
 
 `redline.js` misses the search text (x 268) against the banner text (x 264): the search text sits inside an input, which is one start. It also misses the meetings crumb off the column (about 150px, in the header) and the rail's value icon, chip, and helper at 231, 232, and 234, where no three share an x. An offset is the mover minus its reference.
@@ -46,7 +51,7 @@ A run on a screen you consider clean shows the false positives: every signal the
 
 ## Fix check
 
-`node bench/check-cases.mjs` runs `measure.sh --try` on 86 fixes on the two click dummies, `scope.html`, `row.html`, `seeded.html`, `cmms-cut.html`, `controls.html`, and `shell.html` and compares each verdict. The printed fixes print CLEAN, the printed fix inside an `@media` rule prints CLEAN, and the scope fixture's fix matches only its one heading. Wrong variants fail: half edits, clips (overflow, `contain`, `clip-path`), a fixed height that spills, smaller, tighter, small-caps, condensed, or `scaleX` type, a fit that holds at 1440 only, a table shoved past its card, a chart line moved or hidden, a hidden mover, a transform, a selector that reaches a sibling, a covering `::after` above or below the fold, invisible first lines, a hidden placeholder, a drifting inner paragraph, an unrelated gap that shrinks, a filter, a blend mode, a blurred region, a media rule that blanks the page at 1280, a tile that loses its shared width (`width: fit-content`), and a cut date shrunk or tightened to fit. A markup fix is refused, and a note under 0.5 never prints CLEAN. A case number runs one case: `node bench/check-cases.mjs 8`.
+`node bench/check-cases.mjs` runs `measure.sh --try` on 87 fixes on the two click dummies, `scope.html`, `row.html`, `seeded.html`, `cmms-cut.html`, `controls.html`, `hierarchy.html`, and `shell.html` and compares each verdict. The printed fixes print CLEAN, the printed fix inside an `@media` rule prints CLEAN, and the scope fixture's fix matches only its one heading. Wrong variants fail: half edits, clips (overflow, `contain`, `clip-path`), a fixed height that spills, smaller, tighter, small-caps, condensed, or `scaleX` type, a fit that holds at 1440 only, a table shoved past its card, a chart line moved or hidden, a hidden mover, a transform, a selector that reaches a sibling, a covering `::after` above or below the fold, invisible first lines, a hidden placeholder, a drifting inner paragraph, an unrelated gap that shrinks, a filter, a blend mode, a blurred region, a media rule that blanks the page at 1280, a tile that loses its shared width (`width: fit-content`), and a cut date shrunk or tightened to fit. A markup fix is refused, and a note under 0.5 never prints CLEAN. A case number runs one case: `node bench/check-cases.mjs 8`.
 
 ## The whole skill
 

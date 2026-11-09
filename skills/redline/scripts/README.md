@@ -20,7 +20,7 @@ Each script returns `checks`, ranked by `score`, and numbers them on its overlay
 
 | Field | Holds |
 | --- | --- |
-| `kind` | `edge`, `baseline`, `inset`, `band`, `axis`, `indent` (redline); `contrast`, `sibling`, `control`, `crowding`, `shape`, `square`, `volume`, `large` (count); `rhythm`, `dead-zone`, `collision`, `break` (view bands) |
+| `kind` | `edge`, `baseline`, `inset`, `band`, `axis`, `indent` (redline); `contrast`, `sibling`, `control`, `crowding`, `shape`, `square`, `volume`, `large`, `rank`, `placement`, `contradiction`, `repeat` (count); `rhythm`, `dead-zone`, `collision`, `break` (view bands) |
 | `where` | The element that holds the value, by a handle you can search the code for: an id, `data-slot`, `data-testid`, or its rarest class that is not a utility class, else through the nearest ancestor with one (`ul[data-slot="list"] h2`) |
 | `text` | Its visible text, or `image 320×180`, `box 120×80` |
 | `against` | What it is off from, with that element and value |
@@ -70,7 +70,11 @@ Is the screen crowded or inconsistent? A floating panel lists the checks by numb
 | `shape` | Painted controls of one role (buttons, icon buttons, inputs and selects, tags, badges and dots) in one region (a card, header, form, toolbar, or the controls on one line) that mix square, rounded, and capsule; the odd ones take the region's commonest radius. A rounded radius 2px or more off it is a note |
 | `square` | An icon-only button whose width and height differ by 1 to 8px; the smaller side takes the larger. Unpainted, it prints only beside square ones of its kind |
 | `volume` | Rows of a list whose median row takes more than two lines (more than three text styles prints too, three is a note), or a helper sentence under a card's or section's title with more content below it. No `apply`: cut words or move the preview into the detail |
-| `large` | More than two things compete to lead in view: text at 1.6x the body size, solid fills, images over a quarter of the view; a row of like figures counts as one. Four or more print, three is a note. No `apply` |
+| `large` | More than two things compete to lead in view: text at 1.6x the body size, solid fills, images over a quarter of the view; a row of like figures counts as one. Four or more print; three print when two text leads share a size, else a note. No `apply` |
+| `rank` | A heading at least as large as its parent in the outline (`apply`: the size step its same-level siblings use, with their line-height); the two largest texts in view at one size in different roles; a column using five or more text sizes (four is a note) |
+| `placement` | A pane or card header holding actions while a lone button opens the body; two creation controls ("Add", "New", "+", a plus icon, an add input) in one section. No `apply` |
+| `contradiction` | A title with a count above 0 whose section shows no items or a "No …" line. No `apply` |
+| `repeat` | A pane header title equal to the pane's h1. No `apply` |
 
 JSON besides `checks`: the inventory of the whole layer, scrolled out of view too (`fontSizes`, `fontWeights`, `lineHeights`, `textColors`, `backgrounds`, `radii`, `lines`, `shadows`, `gaps`, `icons`, `buttons`, `controls`, each `[value, count, sample]`), `distinct` and `oneOffs` per list, `tokens` and `offTokenValues`, `unnamed` and `smallTargets`, `slop` (the tells of [slop.md](../references/slop.md) a script can see, each `[tell, count, sample]`), `offGrid` (paddings and gaps off the 4px grid), `nestedRadius` (inner radii larger than their box's radius minus the inset), `words`, `rows` and `cards`, `shapes` (each role's shape classes), `leads` (what competes to lead in view), and `text` (`nothing`, `valueFormats`, `repeats`, and `volume`: words, per list the median and max lines and text styles per row, explanatory sentences, eyebrows, helper sentences); an icon whose box is not square says `not square` in `icons`.
 

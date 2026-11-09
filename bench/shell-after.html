@@ -9,7 +9,7 @@ body{margin:0;font:13px/1.4 -apple-system,Helvetica,sans-serif;color:#1d1f23;bac
 svg.i{width:16px;height:16px;flex:none;fill:none;stroke:#6b7079;stroke-width:1.5}
 svg.c{width:12px;height:12px;flex:none;fill:none;stroke:#8a8f97;stroke-width:1.5}
 button{font:inherit;color:inherit}
-.app{display:grid;grid-template-columns:248px 300px 1fr 300px;height:100vh}
+.app{display:grid;grid-template-columns:248px 300px 1fr 340px;height:100vh}
 .app > section{display:flex;flex-direction:column;min-width:0;border-right:1px solid #e6e7ea;overflow:hidden}
 .app > section:last-child{border-right:0}
 .head{display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid #e6e7ea;flex:none}
@@ -44,18 +44,37 @@ button{font:inherit;color:inherit}
 .pill{height:28px;padding:0 12px;border:1px solid #d9dbe0;border-radius:6px;background:#fff}
 .ctl{height:28px;padding:0 10px;border:1px solid #d9dbe0;border-radius:6px;background:#fff}
 .body{padding:16px;overflow:auto;flex:1}
-.body h1{font-size:28px;line-height:34px;margin:0}
-.meta{margin:4px 0 16px;color:#5d626b}
+.meta{margin:4px 0 0;color:#5d626b}
 .figure{display:flex;align-items:baseline;gap:8px;margin-bottom:20px}
 .figure b{font-size:40px;line-height:44px;font-weight:600}
 .figure span{color:#5d626b}
+.crumb{display:flex;align-items:center;gap:6px;flex:1;min-width:0;color:#5d626b;white-space:nowrap}
+.crumb a{color:inherit;text-decoration:none}
+.crumb span{color:#9a9ea6}
+.chip{height:22px;display:flex;align-items:center;padding:0 8px;border-radius:6px;background:#eef0f3;font-size:12px;color:#3d4148}
+.body h1{font-size:28px;line-height:34px;margin:0}
+.sec{margin-top:32px}
+.sec h2{font-size:15px;line-height:20px;font-weight:600;margin:0 0 8px}
+.sec h2 small{font-size:13px;font-weight:400;color:#5d626b;margin-left:6px}
+svg.h{width:16px;height:16px;flex:none;stroke-width:1.5}
+svg.h.ok{fill:none;stroke:#3b6fd8}
+svg.h.risk{fill:none;stroke:#c8322b}
+svg.h.blocked{fill:#c8322b;stroke:#c8322b}
+.burn{margin:0;color:#5d626b}
+.burn b{color:#1d1f23;font-weight:600}
+.acts{margin:0;padding:0;list-style:none}
+.acts li{display:flex;align-items:center;gap:8px;height:32px;border-bottom:1px solid #f0f1f3}
+.acts li input{margin:0;width:16px;height:16px;flex:none}
+.acts li span{flex:1}
+.acts li em{font-style:normal;font-size:12px;color:#5d626b}
+.addrow{display:flex;align-items:center;gap:8px;height:32px;padding:0;border:0;background:none;color:#5d626b}
+.addrow svg{width:16px;height:16px;padding:2px}
 .stack{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:24px}
 .stack h3{font-size:13px;margin:0}
 .add{display:flex;gap:8px}
 .add input{height:28px;width:220px;padding:0 8px;border:1px solid #d9dbe0;border-radius:6px;font:inherit}
 .event{display:flex;align-items:center;gap:4px;height:28px;padding:0 8px;border:0;background:none;color:#2a2d33}
 .stack p{margin:0;color:#5d626b}
-.body h2{font-size:28px;line-height:34px;margin:0 0 8px}
 .ws-list{margin:0;padding:0;list-style:none}
 .ws-list li{display:flex;align-items:center;gap:8px;height:32px;border-bottom:1px solid #f0f1f3}
 .ws-list li span{flex:1}
@@ -83,6 +102,13 @@ button{font:inherit;color:inherit}
 <symbol id="se" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></symbol>
 <symbol id="ed" viewBox="0 0 16 16"><path d="M3 13h3l7-7-3-3-7 7z"/></symbol>
 <symbol id="x" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></symbol>
+<symbol id="ib" viewBox="0 0 16 16"><path d="M2.5 9.5 4 3.5h8l1.5 6v3h-11zM2.5 9.5h3.5l.5 1.5h3l.5-1.5h3.5"/></symbol>
+<symbol id="dm" viewBox="0 0 16 16"><path d="M8 2.5 13.5 8 8 13.5 2.5 8z"/></symbol>
+<symbol id="ly" viewBox="0 0 16 16"><path d="M8 2.5 13.5 5.5 8 8.5 2.5 5.5zM2.5 8.5 8 11.5l5.5-3M2.5 11 8 14l5.5-3"/></symbol>
+<symbol id="doc" viewBox="0 0 16 16"><path d="M4 2.5h5l3 3v8H4z M9 2.5v3h3"/></symbol>
+<symbol id="ho" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4.5"/></symbol>
+<symbol id="hr" viewBox="0 0 16 16"><path d="M8 3.5 13 12.5H3z"/></symbol>
+<symbol id="hb" viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1.5"/></symbol>
 </svg>
 <div class="app">
 <section class="rail">
@@ -93,25 +119,25 @@ button{font:inherit;color:inherit}
   </header>
   <nav class="nav">
     <a class="row today" href="#"><svg class="i"><use href="#ci"/></svg><span class="label">Today</span></a>
-    <a class="row inbox" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Inbox</span><span class="badge">4</span></a>
+    <a class="row inbox" href="#"><svg class="i"><use href="#ib"/></svg><span class="label">Inbox</span><span class="badge">4</span></a>
     <a class="row actions" href="#"><svg class="i"><use href="#tr"/></svg><span class="label">My actions</span><span class="badge">12</span></a>
-    <a class="row decisions" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Decisions</span></a>
+    <a class="row decisions" href="#"><svg class="i"><use href="#dm"/></svg><span class="label">Decisions</span></a>
     <a class="row reports" href="#"><svg class="i"><use href="#ci"/></svg><span class="label">Reports</span></a>
     <div class="sect"><span>Programs</span><button class="ibtn" aria-label="Add program"><svg class="c"><use href="#pl"/></svg></button></div>
     <div class="group">
       <a class="row" href="#"><svg class="c"><use href="#ch"/></svg><span class="label">Cloud Transformation</span></a>
       <div class="kids">
-        <a class="row on" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">ERP migration</span><span class="badge">3</span></a>
-        <a class="row wms" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">WMS cutover</span><span class="badge">7</span></a>
-        <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Data center exit</span></a>
+        <a class="row on" href="#"><svg class="i"><use href="#ly"/></svg><span class="label">ERP migration</span><span class="badge">3</span></a>
+        <a class="row wms" href="#"><svg class="i"><use href="#ly"/></svg><span class="label">WMS cutover</span><span class="badge">7</span></a>
+        <a class="row" href="#"><svg class="i"><use href="#ly"/></svg><span class="label">Data center exit</span></a>
       </div>
     </div>
     <div class="group">
       <a class="row" href="#"><svg class="c"><use href="#ch"/></svg><span class="label">S/4HANA Finance</span></a>
       <div class="kids fin">
-        <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Finance close redesign</span></a>
-        <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Vendor onboarding</span><span class="badge">2</span></a>
-        <a class="row" href="#"><svg class="i"><use href="#sq"/></svg><span class="label">Treasury interface</span></a>
+        <a class="row" href="#"><svg class="i"><use href="#ly"/></svg><span class="label">Finance close redesign</span></a>
+        <a class="row" href="#"><svg class="i"><use href="#ly"/></svg><span class="label">Vendor onboarding</span><span class="badge">2</span></a>
+        <a class="row" href="#"><svg class="i"><use href="#ly"/></svg><span class="label">Treasury interface</span></a>
       </div>
     </div>
     <div class="sect"><span>Portfolio</span><button class="ibtn" aria-label="Add view"><svg class="c"><use href="#pl"/></svg></button></div>
@@ -145,48 +171,50 @@ button{font:inherit;color:inherit}
 </section>
 <section class="detail">
   <header class="head">
-    <div class="title-row"><svg class="i"><use href="#sq"/></svg>Cloud Transformation</div>
-    <button class="ctl goal">Goal</button>
-    <button class="ctl active">Active</button>
-    <button class="pill">New chat</button>
+    <nav class="crumb"><a href="#">Programs</a><span>/</span>Cloud Transformation</nav>
+    <span class="chip">Active</span>
+    <button class="ctl">New chat</button>
   </header>
   <div class="body">
     <h1>Cloud Transformation</h1>
-    <p class="meta">Program, 6 workstreams, steering committee on Thursday</p>
-    <div class="figure"><b>68 %</b><span>budget burned, 61 % planned</span></div>
-    <div class="stack">
-      <h3>Actions 3</h3>
-      <div class="add"><input placeholder="Add an action"><button class="ctl">Assign team</button></div>
-      <button class="event"><svg class="c"><use href="#pl"/></svg>Event</button>
-      <p>No actions due this week</p>
-      <p>Next review: WMS cutover go or no-go</p>
-    </div>
-    <h2>Wave 2 readiness</h2>
-    <ul class="ws-list">
-      <li><svg class="i"><use href="#sq"/></svg><span>ERP migration</span><em>On track</em></li>
-      <li><svg class="i"><use href="#sq"/></svg><span>WMS cutover</span><em>At risk</em></li>
-      <li><svg class="i"><use href="#sq"/></svg><span>Data center exit</span><em>On track</em></li>
-      <li><svg class="i"><use href="#sq"/></svg><span>Identity platform</span><em>Blocked</em></li>
-    </ul>
+    <p class="meta">6 workstreams, steering committee Thursday</p>
+    <section class="sec">
+      <h2>Workstreams <small>2 need you</small></h2>
+      <ul class="ws-list">
+        <li><svg class="h blocked"><use href="#hb"/></svg><span>Identity platform</span><em>Blocked</em></li>
+        <li><svg class="h risk"><use href="#hr"/></svg><span>WMS cutover</span><em>At risk</em></li>
+        <li><svg class="h ok"><use href="#ho"/></svg><span>ERP migration</span><em>On track</em></li>
+        <li><svg class="h ok"><use href="#ho"/></svg><span>Data center exit</span><em>On track</em></li>
+      </ul>
+    </section>
+    <section class="sec">
+      <h2>Budget</h2>
+      <p class="burn"><b>68 %</b> burned against 61 % planned, 7 points over plan</p>
+    </section>
+    <section class="sec">
+      <h2>Actions <small>3</small></h2>
+      <ul class="acts">
+        <li><input type="checkbox" aria-label="Done"><span>Confirm the EDI mapping fix with carrier IT</span><em>Fri</em></li>
+        <li><input type="checkbox" aria-label="Done"><span>Book the cutover war room for Hall B</span><em>Mon</em></li>
+        <li><input type="checkbox" aria-label="Done"><span>Send the steerco pre-read</span><em>Wed</em></li>
+      </ul>
+      <button class="addrow"><svg class="c"><use href="#pl"/></svg>Add action</button>
+    </section>
   </div>
 </section>
 <section class="files">
   <header class="head">
     <div class="tab on">Files <small>45</small></div>
+    <div class="tab">Decisions <small>2</small></div>
     <div class="tab">Schedule <small>3</small></div>
     <div style="flex:1"></div>
     <button class="ibtn" aria-label="Search files"><svg class="i"><use href="#se"/></svg></button>
-    <button class="ibtn x" aria-label="Close"><svg class="i"><use href="#x"/></svg></button>
+    <button class="ibtn" aria-label="Add files"><svg class="i"><use href="#pl"/></svg></button>
   </header>
   <div class="fbody">
-    <div class="bar"><button class="ctl">Add files</button></div>
-    <p class="cap">Artifacts 3</p>
-    <div class="file"><svg class="i"><use href="#sq"/></svg><div><b>Cutover runbook v3.xlsx</b><small>Nov 7, WMS cutover</small></div></div>
-    <div class="file"><svg class="i"><use href="#sq"/></svg><div><b>Steerco deck week 45.pptx</b><small>Nov 6, Cloud Transformation</small></div></div>
-    <div class="file"><svg class="i"><use href="#sq"/></svg><div><b>Interface inventory.xlsx</b><small>Nov 5, ERP migration</small></div></div>
-    <p class="cap">Decisions 2</p>
-    <div class="file"><svg class="i"><use href="#tr"/></svg><div><b>Freeze ECC custom code from Nov 15</b><small>Steerco, Nov 4</small></div></div>
-    <div class="file"><svg class="i"><use href="#tr"/></svg><div><b>Keep Hall C on the old label template</b><small>WMS cutover, Nov 3</small></div></div>
+    <div class="file"><svg class="i"><use href="#doc"/></svg><div><b>Cutover runbook v3.xlsx</b><small>Nov 7, WMS cutover</small></div></div>
+    <div class="file"><svg class="i"><use href="#doc"/></svg><div><b>Steerco deck week 45.pptx</b><small>Nov 6, Cloud Transformation</small></div></div>
+    <div class="file"><svg class="i"><use href="#doc"/></svg><div><b>Interface inventory.xlsx</b><small>Nov 5, ERP migration</small></div></div>
   </div>
 </section>
 </div>

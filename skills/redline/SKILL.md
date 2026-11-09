@@ -83,13 +83,14 @@ Each lens is a checklist for one topic. Run the ones the change touches; on a Fu
 
 - The tools ([`scripts/README.md`](scripts/README.md)) measure the region you are fixing on the open page. The loop: `measure.sh <dir> <region>` before you change anything; `measure.sh --try <dir> <n> [fix.css]` on each CSS fix before it goes into the code; the edit; `measure.sh` again; `--compare` the two runs.
 - The minimum checks are the floor of the review, not the review. Look at `redline.png` and `view-bands.png` yourself, region by region at 2x, for what no check names: a row whose same-size texts sit at different heights, a badge or label on text, a gap that differs by eye, anything cut below the fold. Each check is a candidate you confirm on the image. Fix layout checks before parts.
+- Zero checks proves consistency, not design: a screen can sit on every line and still lead with the wrong thing. Once the checks pass, run the skeleton and the squint test again (`view.js` `lead`) against the user's question; only then is it done.
 
 ## Critic
 
 Fresh eyes on a Full task once the lenses hold. Skip it while the user is iterating on visuals: then they are the critic.
 
 - Give a fresh sub-agent the screenshots with the `redline.png` overlay of each, the user's question in their words, and the settled decisions as fixed: no code, no reasoning, no account of what you meant. A new sub-agent each round.
-- Ask for the weakest spots, most severe first, each as: where on the screen, what fails, which user goal or principle it hurts, and the fix. A point without a fix is not a finding. Ask it to flag anything that looks generic or machine-made in the same form, and to answer the template check: with another product's name on it, would the screen still fit? A clean critique is a valid answer.
+- Start with one fixed question: what does the user come here for, and is that what leads? Then ask for the weakest spots, most severe first, each as: where on the screen, what fails, which user goal or principle it hurts, and the fix. A point without a fix is not a finding. Ask it to flag anything that looks generic or machine-made in the same form, and to answer the template check: with another product's name on it, would the screen still fit? A clean critique is a valid answer.
 - Fix and ask again. Stop after two rounds; a third round means the layout gate was wrong. Keep the stop rule out of the critic's prompt.
 - Without sub-agents, critique the screenshots yourself, as if seeing them for the first time.
 

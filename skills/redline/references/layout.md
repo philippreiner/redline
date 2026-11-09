@@ -43,6 +43,7 @@ Where a thing goes is settled before how it looks; users look where the tools th
 
 - A bar has three zones: leading for navigation and the title, the middle for the few common actions, trailing for search, More, and the one primary action. At most three clusters per bar.
 - The answer the user came for sits in the top half of the first screen, on the content's left edge, distinguishing words first.
+- A pane keeps its actions in one zone, its header's trailing side: search there and "Add" in the body splits them. One add per section, and it creates the section's own object; an add for another object (an event in an actions list) lives with that object.
 - A screen-wide action sits in the header's trailing zone; an action on one thing sits beside it ([hierarchy.md](hierarchy.md#act-where-you-look)).
 - What the user needs stays out of the bottom of a sidebar or long panel; account and settings may live there.
 - A thing with no edge, region, or subject beside it has no place yet: give it one or cut it.

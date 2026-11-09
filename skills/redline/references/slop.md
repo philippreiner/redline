@@ -27,6 +27,7 @@ Adapted from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([
 - Emoji as icons, label decoration, or status → one line icon set, or nothing.
 - A sparkle for anything AI → remove it, or a plain icon where it explains something.
 - Icons in many sizes and colors → one size and stroke, in the ink of their text.
+- Checkbox squares in front of things nobody can check → the object's icon, or nothing.
 
 ## Spacing
 
@@ -54,6 +55,8 @@ Adapted from [unslop](https://github.com/heydamir/unslop) by Damir Sokolovsky ([
 - Pill and rectangle buttons side by side, controls in three heights in one bar → one shape and one height per role.
 - An icon in a tinted circle on every card, an eyebrow over every title, tags on everything → cut what does not carry information; a tag stays where it is a property people filter or act on.
 - Containers with borders inside containers, a divider between every row → space groups first, then a tonal fill, a line only between fixed regions.
+- Properties (status, goal) as outlined buttons beside real actions → a chip or a select for the property, a button for the action.
+- A section title as large as the page title → one step down the type scale.
 - Over-detailed parts: every row with meta, icons, badges, and a second line → the one primary text, one value, and one mark the row needs.
 - Detailed diagrams, the more parts the worse → the simplest picture that answers the question, or a sentence.
 - Sparklines or mini bars in every stat tile → the number, its label, and its comparison.
